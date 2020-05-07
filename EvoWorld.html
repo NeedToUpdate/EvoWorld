@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>EvoWorld</title>
+    <meta charset="UTF-8" name="viewport" content="width=device-width, user-scalable=no">
+    <script language="javascript" type="text/javascript"  src="./lib/vector.js"></script>
+    <script language="javascript" type="text/javascript"  src="./lib/drawbase.js"></script>
+    <script language="javascript"  type="text/javascript" src="./lib/matrix.js"></script>
+    <script language="javascript"  type="text/javascript" src="./lib/character.js"></script>
+    <script language="javascript"  type="text/javascript" src="./lib/div.js"></script>
+    <script language="javascript"  type="text/javascript" src="./lib/hitbox.js"></script>
+    <script language="javascript" type="text/javascript" src="./lib/eventemitter.js"></script>
+    <script language="javascript" type="text/javascript" src="./worm.js"></script>
+</head>
+<body>
+<p style="font-size: 0.5em; color: white; font-weight: bold"> fps: <span id="framerate">0</span></p>
+
+<script>
+    LOOPING = true;
+    let population = [];
+    let POP_SIZE = 30;
+    let unit = 10;
+    let FRICTION_COEFF = .1;
+    let SPEED_LIMIT = 400;
+    let LOGPLZ = false;
+    function setupDraw(){
+        document.body.style.backgroundColor = 'darkgreen';
+        return new Promise(resolve=>{
+            resolve(true);
+        })
+    }
+    function setupLogic(){
+        return new Promise(resolve=>{
+            for(let i = 0; i<POP_SIZE; i++){
+                let w = new Worm(getRandom(100,width-100), getRandom(100,height-100));
+                w.r = getRandom(361);
+                population.push(w);
+            }
+            resolve(true);
+        })
+    }
+    function doLogic(dt){
+        return new Promise(resolve=>{
+            for(let i = population.length-1; i>=0; i--){
+                population[i].update(dt);
+            }
+            resolve(true);
+        })
+    }
+    function doDraw(){
+        return new Promise(resolve=>{
+            //since this will eventually turn into a webGL thing, all drawing is separate from logic
+            population.forEach(worm=>{
+                if(!worm.TEMPGFX){
+                    worm.TEMPGFX = {};
+                    worm.TEMPGFX.shape = new Div(worm.p.x,worm.p.y,'white',unit,unit*2,true);
+                }
+                worm.TEMPGFX.shape.moveTo(worm.p);
+                worm.TEMPGFX.shape.rotateTo(worm.r);
+                if(worm.dead){
+                    worm.TEMPGFX.shape.remove();
+                }
+            });
+
+
+
+
+
+            resolve(true);
+        })
+    }
+    let prev_time = 0;
+    function loop(now){
+        //fps calc
+        let delta_time = now - prev_time;
+        id('framerate').innerText = 1000/(delta_time) | 0;
+        prev_time = now;
+
+        doLogic(delta_time).then(()=>{
+            doDraw().then(()=>{
+                if(LOOPING){
+                    requestAnimationFrame(loop)
+                }
+            })
+        }).catch(err=>{
+            console.log(err)
+        });
+    }
+    function start(){
+        setupLogic().then(()=>{
+            setupDraw().then(()=>{
+                requestAnimationFrame(loop);
+            });
+        }).catch(err=>{
+            console.log(err)
+        });
+    }
+
+
+    start();
+
+
+</script>
+
+</body>
+</html>
