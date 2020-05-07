@@ -4,6 +4,14 @@
     <meta charset="UTF-8">
     <title>EvoWorld</title>
     <meta charset="UTF-8" name="viewport" content="width=device-width, user-scalable=no">
+    <script>
+        //GLOBALS
+        let POP_SIZE = 30;
+        let UNIT = 10;
+        let FRICTION_COEFF = .1;
+        let SPEED_LIMIT = 400;
+        let LOGPLZ = false;
+    </script>
     <script language="javascript" type="text/javascript"  src="./lib/vector.js"></script>
     <script language="javascript" type="text/javascript"  src="./lib/drawbase.js"></script>
     <script language="javascript"  type="text/javascript" src="./lib/matrix.js"></script>
@@ -12,6 +20,8 @@
     <script language="javascript"  type="text/javascript" src="./lib/hitbox.js"></script>
     <script language="javascript" type="text/javascript" src="./lib/eventemitter.js"></script>
     <script language="javascript" type="text/javascript" src="./worm.js"></script>
+    <script language="javascript" type="text/javascript" src="./appendage.js"></script>
+    <script language="javascript" type="text/javascript" src="./memory_piece.js"></script>
 </head>
 <body>
 <p style="font-size: 0.5em; color: white; font-weight: bold"> fps: <span id="framerate">0</span></p>
@@ -19,11 +29,22 @@
 <script>
     LOOPING = true;
     let population = [];
-    let POP_SIZE = 30;
-    let unit = 10;
-    let FRICTION_COEFF = .1;
-    let SPEED_LIMIT = 400;
-    let LOGPLZ = false;
+
+    class tempGFX{
+        constructor(){
+        }
+        static eye(offset){
+            let eye = new Div(UNIT/2+offset.x,0+offset.y,'white',UNIT/2);
+            let iris = new Div(UNIT/4,UNIT/4,'white', UNIT/4);
+            eye.add(iris);
+            return eye;
+        }
+
+    }
+
+
+
+
     function setupDraw(){
         document.body.style.backgroundColor = 'darkgreen';
         return new Promise(resolve=>{
@@ -34,7 +55,7 @@
         return new Promise(resolve=>{
             for(let i = 0; i<POP_SIZE; i++){
                 let w = new Worm(getRandom(100,width-100), getRandom(100,height-100));
-                w.r = getRandom(361);
+                w.currentBehaviour = 'randomWalk';
                 population.push(w);
             }
             resolve(true);
@@ -54,10 +75,20 @@
             population.forEach(worm=>{
                 if(!worm.TEMPGFX){
                     worm.TEMPGFX = {};
-                    worm.TEMPGFX.shape = new Div(worm.p.x,worm.p.y,'white',unit,unit*2,true);
+                    worm.TEMPGFX.shape = new Div(worm.p.x,worm.p.y,'white',UNIT,UNIT*2,true);
                 }
                 worm.TEMPGFX.shape.moveTo(worm.p);
                 worm.TEMPGFX.shape.rotateTo(worm.r);
+                if(worm.appendages.length>0 && !worm.TEMPGFX.appendages){
+                    worm.TEMPGFX.appendages = [];
+                    worm.appendages.forEach(part=>{
+                        if(part.name === 'eye'){
+                            let eye = tempGFX.eye(part.offset);
+                            worm.TEMPGFX.shape.add(eye)
+                        }
+                    })
+                }
+
                 if(worm.dead){
                     worm.TEMPGFX.shape.remove();
                 }
