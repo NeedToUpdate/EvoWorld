@@ -10,41 +10,140 @@
         let UNIT = 10;
         let FRICTION_COEFF = .1;
         let SPEED_LIMIT = 400;
-        let LOGPLZ = false;
+        let FOOD_AMOUNT = 150;
+        let TICK_DECAY = 0.1;
     </script>
     <script language="javascript" type="text/javascript"  src="./lib/vector.js"></script>
+    <script language="javascript" type="text/javascript"  src="./lib/matrix.js"></script>
     <script language="javascript" type="text/javascript"  src="./lib/drawbase.js"></script>
-    <script language="javascript"  type="text/javascript" src="./lib/matrix.js"></script>
-    <script language="javascript"  type="text/javascript" src="./lib/character.js"></script>
     <script language="javascript"  type="text/javascript" src="./lib/div.js"></script>
+    <script language="javascript"  type="text/javascript" src="./lib/overlay.js"></script>
     <script language="javascript"  type="text/javascript" src="./lib/hitbox.js"></script>
-    <script language="javascript" type="text/javascript" src="./lib/eventemitter.js"></script>
+    <script language="javascript"  type="text/javascript" src="./lib/nn.js"></script>
+    <script language="javascript" type="text/javascript" src="./lib/quad.js"></script>
     <script language="javascript" type="text/javascript" src="./worm.js"></script>
     <script language="javascript" type="text/javascript" src="./appendage.js"></script>
-    <script language="javascript" type="text/javascript" src="./memory_piece.js"></script>
+    <script language="javascript" type="text/javascript" src="small_stuff.js"></script>
 </head>
 <body>
 <p style="font-size: 0.5em; color: white; font-weight: bold"> fps: <span id="framerate">0</span></p>
+<p style="font-size: 0.5em; color: white; font-weight: bold"> gen: <span id="gen_count">0</span></p>
 
 <script>
     LOOPING = true;
     let population = [];
+    let food = [];
+    let gfxoffsets = {
+        head: {p: new Vector(UNIT/2,0), r:0},
+        butt: {p: new Vector(UNIT/2,UNIT*2), r:180},
+        left_side: {p: new Vector(0,UNIT/2), r:-90},
+        right_side: {p: new Vector(UNIT,UNIT/2), r:90},
+        left_butt: {p: new Vector(0,UNIT*1.5), r:-90},
+        right_butt: {p: new Vector(UNIT,UNIT*1.5), r:90},
+    };
 
-    class tempGFX{
-        constructor(){
+    let hitboxes_toggle = false;
+    function toggleHitboxes(){
+        if(hitboxes_toggle){
+            population.forEach(worm=>{
+                worm.hitbox.hidePoints();
+                worm.appendages.forEach(part=>{
+                    if(part.hitbox){
+                        part.hitbox.hidePoints();
+                    }
+                })
+            })
+        }else{
+            population.forEach(worm=>{
+                worm.hitbox.drawPoints();
+                worm.appendages.forEach(part=>{
+                    if(part.hitbox){
+                        part.hitbox.drawPoints();
+                    }
+                })
+            })
         }
-        static eye(offset){
-            let eye = new Div(UNIT/2+offset.x,0+offset.y,'white',UNIT/2);
-            let iris = new Div(UNIT/4,UNIT/4,'white', UNIT/4);
-            eye.add(iris);
-            return eye;
-        }
-
+       hitboxes_toggle = !hitboxes_toggle
     }
 
+    class tempGFX{
+        static create(name,location){
+            switch(name){
+                //creates a div to attach
+                    // needs to come back with the offset, rotation
+                // and a property 'part' that contains the name and location
+                case 'eye':
+                    let eyeOffset = gfxoffsets[location].p.copy().sub(new Vector(UNIT/4,UNIT/4));
+                    let eye = new Div(UNIT/4+eyeOffset.x,eyeOffset.y,'white',UNIT/3);
+                    eye.set('backgroundColor', 'white');
+                    let iris = new Div(UNIT/3,UNIT/3,'white', UNIT/4);
+                    iris.set('backgroundColor', 'black');
+                    eye.part = {name: name, location: location};
+                    eye.add(iris);
+                    return eye;
+                case 'worm':
+                    let body = new Div(0,0,'transparent', UNIT, UNIT*2, true);
+                    let line = new DivLine(0,UNIT*2/3,UNIT,null,'#886611');
+                    let line2 = new DivLine(0,UNIT*4/3,UNIT,null,'#886611');
+                    body.set('backgroundColor', '#997722');
+                    body.set('borderRadius', UNIT/2 + 'px');
+                    body.add(line);
+                    body.add(line2);
+                    return body;
+                case 'fat':
+                    let fatOffset = gfxoffsets[location].p.copy();
+                    let fatRotation = gfxoffsets[location].r;
+                    let fat = new Div(fatOffset.x,fatOffset.y, '#886611', UNIT/2);
+                    fat.set('height', UNIT*2/3|0 + 'px');
+                    fat.set('borderRadius', '50% 50% 0 0 / 100% 100% 0 0');
+                    fat.set('borderBottom', 'transparent')
+                    fat.set('backgroundColor', '#997722');
+                    fat.part = {name: name, location: location};
+                    fat.rotateTo(fatRotation);
+                    return fat;
+            }
+        }
+    }
+
+    let genCount = 0;
+    function getNewGen(){
+        genCount++;
+        //HANDLE TEMP GRAPHICS
+        population.forEach(worm=>{
+            if(worm.TEMPGFX){
+                worm.TEMPGFX.shape.remove();
+            }
+        });
+        id('gen_count').innerText = genCount;
 
 
+        //HANDLE LOGIC
+        let fittest = getFittest(population);
+        population = [];
+        for(let i = 0; i<POP_SIZE-1; i++){
+            let newWorm = fittest.copy();
+            newWorm.p = Vector.random(width,height);
+            newWorm.brain.mutate(0.01,0.1);
+            newWorm.brain.mutate(0.05,0.05);
+            newWorm.brain.mutate(0.05,0.01);
+            population.push(newWorm);
+        }
+        population.push(fittest.copy());
+    }
 
+    function getFittest(population){
+        return population.reduce((a, b) => {
+            if (a.getFitness() >= b.getFitness()) {
+                return a;
+            } else {
+                return b;
+            }
+        });
+    }
+
+    //quad needed for performace in the future
+    let QUAD = {};
+    let FOODQUAD = {};
     function setupDraw(){
         document.body.style.backgroundColor = 'darkgreen';
         return new Promise(resolve=>{
@@ -53,18 +152,41 @@
     }
     function setupLogic(){
         return new Promise(resolve=>{
+            QUAD = new Quad(width,height,0,0);
             for(let i = 0; i<POP_SIZE; i++){
                 let w = new Worm(getRandom(100,width-100), getRandom(100,height-100));
-                w.currentBehaviour = 'randomWalk';
+                w.currentBehaviour = '';
+                w.addAppendage('eye','head');
+                w.init();
+                QUAD.addItem(w.p.copy(),w);
                 population.push(w);
+            }
+            FOODQUAD = new Quad(width,height,0,0);
+            for(let i = 0; i<FOOD_AMOUNT; i++){
+                let foodPiece = new FoodPiece(new Vector(getRandom(50,width-50), getRandom(50, height-50)),getRandom(1,4));
+                FOODQUAD.addItem(foodPiece.p.copy(), foodPiece);
+                food.push(foodPiece);
             }
             resolve(true);
         })
     }
+    let deadCounter = 0;
     function doLogic(dt){
         return new Promise(resolve=>{
             for(let i = population.length-1; i>=0; i--){
                 population[i].update(dt);
+                if(population[i].dead){
+                    deadCounter++;
+                }
+                for(let j = population[i].appendages.length-1; j>=0; j--){
+                    if(population[i].appendages[j].dead){
+                        population[i].appendages.splice(j,1);
+                    }
+                }
+            }
+            if(deadCounter-1>=POP_SIZE){
+                deadCounter = 0;
+                getNewGen();
             }
             resolve(true);
         })
@@ -75,28 +197,45 @@
             population.forEach(worm=>{
                 if(!worm.TEMPGFX){
                     worm.TEMPGFX = {};
-                    worm.TEMPGFX.shape = new Div(worm.p.x,worm.p.y,'white',UNIT,UNIT*2,true);
+                    worm.TEMPGFX.shape = tempGFX.create('worm');
+                    worm.TEMPGFX.appendages = [];
                 }
                 worm.TEMPGFX.shape.moveTo(worm.p);
                 worm.TEMPGFX.shape.rotateTo(worm.r);
-                if(worm.appendages.length>0 && !worm.TEMPGFX.appendages){
-                    worm.TEMPGFX.appendages = [];
+                if(worm.appendages.length !== worm.TEMPGFX.appendages.length){
                     worm.appendages.forEach(part=>{
-                        if(part.name === 'eye'){
-                            let eye = tempGFX.eye(part.offset);
-                            worm.TEMPGFX.shape.add(eye)
+                       if(worm.TEMPGFX.appendages.filter(shape => shape.part.name === part.name && shape.part.location === part.location).length===0){
+                           let newPart = tempGFX.create(part.name,part.location);
+                           worm.TEMPGFX.appendages.push(newPart);
+                           worm.TEMPGFX.shape.add(newPart);
+                       }
+                    });
+                    //if theres too many graphics objects then one needs to be removed
+                    if(worm.TEMPGFX.appendages.length > worm.appendages.length){
+                        //cycle through them backwards, find the one that doesnt exist, delete it
+                        for(let i = worm.TEMPGFX.appendages.length-1; i>=0; i--){
+                            let item = worm.appendages.filter(x=>x.name === worm.TEMPGFX.appendages[i].part.name && x.location === worm.TEMPGFX.appendages[i].part.location);
+                            if(item.length === 0){
+                                //run remove() to get rid of th dic and delete the reference in TEMPGFX
+                                worm.TEMPGFX.appendages[i].remove();
+                                worm.TEMPGFX.appendages.splice(i,1);
+                            }
                         }
-                    })
+                    }
                 }
-
                 if(worm.dead){
                     worm.TEMPGFX.shape.remove();
                 }
             });
-
-
-
-
+            food.forEach(piece=>{
+                if(!piece.TEMPGFX){
+                    piece.TEMPGFX = {};
+                    piece.TEMPGFX.shape = new Div(piece.p.x,piece.p.y,'yellow',piece.energy);
+                }
+                if(piece.eaten && piece.TEMPGFX){
+                    piece.TEMPGFX.shape.remove();
+                }
+            });
 
             resolve(true);
         })
@@ -127,8 +266,6 @@
             console.log(err)
         });
     }
-
-
     start();
 
 

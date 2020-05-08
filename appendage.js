@@ -1,9 +1,9 @@
 let offsets = {
-    head: {p:new Vector(0,UNIT*-2),r:0},
+    head: {p:new Vector(0,UNIT*2),r:180},
     butt: {p:new Vector(0,UNIT*2),r:0},
-    right_side: {p:new Vector(UNIT*-.5,UNIT*-1.5), r: 90},
-    left_side: {p:new Vector(UNIT*.5,UNIT*-1.5), r: -90},
-    left_butt: {p:new Vector(UNIT*-.5,UNIT*-1.5), r: -90},
+    right_side: {p:new Vector(UNIT*.5,UNIT*1.5), r: -90},
+    left_side: {p:new Vector(UNIT*-.5,UNIT*1.5), r: 90},
+    left_butt: {p:new Vector(UNIT*.5,UNIT*1.5), r: 90},
     right_butt: {p:new Vector(UNIT*-.5,UNIT*1.5), r: -90},
 };
 
@@ -18,7 +18,9 @@ class Appendage{
         if(location){
             this.setLocation(location)
         }
-
+        this.dead = false;
+        this.hasInput = false;
+        this.hasOutput = false;
     }
     use(){
 
@@ -39,6 +41,8 @@ class Appendage{
         switch(name){
             case 'eye':
                 return new Eye(0,0,0);
+            case 'fat':
+                return new Fat(0,0,0);
             default:
                 console.log('no name chosen')
         }
@@ -49,7 +53,8 @@ class Eye extends Appendage{
     constructor(x,y,r,location){
         super(x,y,r,location);
         this.name = 'eye';
-        this.hitbox = new Hitbox(x+UNIT/2,y+UNIT*2,UNIT,UNIT*2,true);
+        this.hitbox = new Hitbox(x+UNIT/2,y+UNIT*2,UNIT,UNIT*5);
+        this.hasInput = true;
     }
     use(arrayOfPoints){
         let found = [];
@@ -70,5 +75,41 @@ class Eye extends Appendage{
     }
     remove(){
         this.hitbox.destroy();
+    }
+}
+
+class Fat extends Appendage{
+    constructor(x,y,r,location){
+        super(x,y,r,location);
+        this.name = 'fat';
+        this.energy = 10;
+        this.full = false;
+        this.MAX_ENERGY = 100;
+    }
+    update(){
+        if(this.energy === 0 ){
+            this.dead = true;
+        }
+    }
+    addEnergy(e){
+        if(this.energy + e >= this.MAX_ENERGY){
+            let temp = this.energy + e - this.MAX_ENERGY;
+            this.energy = this.MAX_ENERGY;
+            this.full = true;
+            return temp;
+        }
+        this.energy += e;
+        return 0;
+    }
+    getEnergy(amount){
+        if(this.energy<=amount){
+          let e = this.energy;
+          this.energy = 0;
+          this.dead = true;
+          return e;
+        }
+        this.energy -= amount;
+        if(this.energy<this.MAX_ENERGY) this.full = false;
+        return amount;
     }
 }
