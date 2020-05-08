@@ -12,6 +12,7 @@
         let SPEED_LIMIT = 400;
         let FOOD_AMOUNT = 150;
         let TICK_DECAY = 0.1;
+        let PLZLOG = false;
     </script>
     <script language="javascript" type="text/javascript"  src="./lib/vector.js"></script>
     <script language="javascript" type="text/javascript"  src="./lib/matrix.js"></script>
@@ -41,7 +42,6 @@
         left_butt: {p: new Vector(0,UNIT*1.5), r:-90},
         right_butt: {p: new Vector(UNIT,UNIT*1.5), r:90},
     };
-
     let hitboxes_toggle = false;
     function toggleHitboxes(){
         if(hitboxes_toggle){
@@ -104,6 +104,25 @@
             }
         }
     }
+    function runExtraDraws(){
+
+    }
+    function lookAt(n){
+        population[n].TEMPFLASH();
+        global_overlay = new nnOverlay(population[n].brain);
+        global_overlay.init();
+        runExtraDraws = function(){
+            global_overlay.draw();
+        }
+    }
+    function stopLook(){
+        if(global_overlay){
+            global_overlay.destroy();
+            delete global_overlay;
+            runExtraDraws = ()=>{};
+        }
+    }
+
 
     let genCount = 0;
     function getNewGen(){
@@ -150,6 +169,15 @@
             resolve(true);
         })
     }
+
+    document.addEventListener('click',e=>{
+       let x = e.clientX;
+       let y = e.clientY;
+        let foodPiece = new FoodPiece(new Vector(x,y),getRandom(1,4));
+        FOODQUAD.addItem(foodPiece.p.copy(), foodPiece);
+        food.push(foodPiece);
+        console.log('blop', x, y)
+    });
     function setupLogic(){
         return new Promise(resolve=>{
             QUAD = new Quad(width,height,0,0);
@@ -193,6 +221,7 @@
     }
     function doDraw(){
         return new Promise(resolve=>{
+            runExtraDraws()
             //since this will eventually turn into a webGL thing, all drawing is separate from logic
             population.forEach(worm=>{
                 if(!worm.TEMPGFX){

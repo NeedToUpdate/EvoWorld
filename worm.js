@@ -301,14 +301,14 @@ class Worm {
          */
 
         //needed more than once here so optimized
-        let nearbyFood = FOODQUAD.query(this.p.x,this.p.y,UNIT*3).map(x=>x.data);
+        let nearbyFood = FOODQUAD.query(this.p.x,this.p.y,UNIT*6);
 
         if(this.inputToggles.speed){
             inputs.push(this.v.copy().mag()/SPEED_LIMIT) //normalized
         }
         if(this.inputToggles.rotation){
             //rotation away from north? //TODO
-            let angle = (this.r%360 -180)/180;
+            let angle = 1-Math.abs(this.r%360 -180)/180;
             inputs.push(angle)
         }
         if(this.inputToggles.energy){
@@ -333,6 +333,10 @@ class Worm {
 
         this.appendages.filter(x=>x.hasInput).forEach(part=>{
             let canSeeStuff = part.use(nearbyFood).length>0?1:0;
+            if(PLZLOG){
+                console.log(canSeeStuff, nearbyFood, part.use(nearbyFood))
+                PLZLOG = false;
+            }
             inputs.push(canSeeStuff);
         });
         return this.brain.predict(inputs);
@@ -497,6 +501,10 @@ class Worm {
         });
         worm.currentBehaviour = this.currentBehaviour;
         return worm
+    }
+
+    TEMPsee(){
+        console.log(this.appendages[0].use(FOODQUAD.query(this.p.x,this.p.y,UNIT*6)))
     }
 
 
