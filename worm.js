@@ -1,10 +1,49 @@
 let locations = ['head', 'butt', 'left_side', 'right_side', 'left_butt', 'right_butt'];
+let DNAstructure = [1,2,1,1,1,1,1,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1];
+
+/*
+eye num 1
+eye location 2
+cooldown 1
+
+#inputs#
+
+speed 1
+rotation: 1
+body_feel: 1
+energy: 1
+inverse_energy: 1
+constant: 1
+random: 1
+num_of_appendages: 1
+x_position: 1
+y_position: 1
+
+max energy 2
+
+#outputs#
+
+moveFwd: 1,
+turnLeft: 1,
+turnRight: 1,
+eat: 1,
+
+#layer config#
+
+layers: 1,
+nodes: 1,
+activation0: 1,
+activation1: 1,
+activation2: 1,
+
+ */
 
 class Worm {
     constructor(x, y) {
         this.origin_x = x;
         this.origin_y = y;
         this.p = new Vector(x, y);
+        this.old_p = this.p.copy();
         this.r = 0;
         this.v = new Vector();
         this.old_v = new Vector();
@@ -19,7 +58,7 @@ class Worm {
         this.walkCooldown = 2;
         this.restNeeded = 2;
         this.turnTarget = 0;
-        this.currentBehaviour = 'randomWalk';
+        this.currentBehaviour = '';
         this.dead = false;
         this.bounds = {
             x1: 0,
@@ -30,18 +69,19 @@ class Worm {
         this.appendages = [];
         this.MAX_ENERGY = 100;
         this.CRITICAL_LOW_ENERGY = 20;
-
+        this.isDnaParsed = false;
 
         this.inputToggles = {
-            random: false,
             speed: true,
-            rotation: true,
+            rotation: false,
             energy: true,
+            inverse_energy: true,
             body_feel: true, //something in the hitbox
+            constant: true,
+            random: true,
             num_of_appendages: false,
             x_position: false,
             y_position: false,
-            constant: true,
         };
 
         this.outputToggles = {
@@ -53,11 +93,24 @@ class Worm {
             moveBkwd: false,
             changeBehaviour: false,
         };
+
+        this.layerConfig = {
+            layers: 1,
+            nodes: this.calculateInputs()+1,
+            activation0: 'relu',
+            activation1: 'relu',
+            activation2: 'relu',
+        };
+        this.DNA = {};
         this.brain = {};
     }
 
     init(){
-        this.brain = this.createBrain();
+        if(!this.isDnaParsed){
+            this.DNA = this.createDNA();
+            this.parseDNA();
+        }
+        if(Object.keys(this.brain).length===0) this.brain = this.createBrain();
     }
 
     update(dt) {
@@ -116,8 +169,11 @@ class Worm {
         }
 
         //handle energy loss and fitness
-        this.energy -= TICK_DECAY
-        this.fitness += TICK_DECAY/5;
+        this.energy -= TICK_DECAY;
+        //this.fitness += TICK_DECAY/5;
+        let d = this.old_p.dist(this.p);
+        //this.fitness += d/400;
+        this.old_p = this.p.copy();
 
 
         //die if no energy
@@ -168,9 +224,6 @@ class Worm {
         return taken;
     }
 
-    TEMPFLASH(){
-        this.TEMPGFX.shape.set('backgroundColor', 'blue')
-    }
 
     getFreeAppendageLocation() {
         let usedLocations = this.appendages.map(x => x.location);
@@ -204,11 +257,10 @@ class Worm {
         if (this.isWalking) return;
         if (!strength) strength = 0;
         this.energy -= strength;
-        this.fitness += strength/4; //TODO maybe not ok?
         let direction = Vector.fromAngle(this.r).mult(strength);
         this.a.add(direction);
         this.isWalking = true;
-        this.walkCooldown = this.restNeeded;
+        this.walkCooldown = this.restNeeded * (this.MAX_ENERGY-this.energy)/this.MAX_ENERGY;
     }
 
     doBehaviour() {
@@ -240,15 +292,9 @@ class Worm {
     createBrain(){
         let brain = new NeuralNetwork(this.calculateInputs());
         //the following also might be controlled by dna idk
-        let layerConfig = {
-            layers: 3,
-            nodes: this.calculateInputs()+3,
-            activation0: 'sigmoid',
-            activation1: 'relu',
-            activation2: 'relu',
-        };
-        for(let i = 0; i<layerConfig.layers; i++){
-            brain.addLayer(layerConfig.nodes,'dense', {activation_fn:layerConfig['activation'+i]})
+
+        for(let i = 0; i<this.layerConfig.layers; i++){
+            brain.addLayer(this.layerConfig.nodes,'dense', {activation_fn:this.layerConfig['activation'+i]})
         }
 
         //outputs might be different later on due to outputable appendages
@@ -270,7 +316,8 @@ class Worm {
 
         // counts the number of true in the top object and sums them and adds to inputs
         inputs += Object.values(this.inputToggles).reduce((tot,a)=>tot+(a?1:0),0);
-        return inputs;
+        //TODO variable brains
+        return 11;
     }
 
     calculateOutputs(){
@@ -282,7 +329,8 @@ class Worm {
         //here would be the code that conrolls the output toggles
 
         outputs += Object.values(this.outputToggles).reduce((tot,a)=>tot+(a?1:0),0);
-        return outputs;
+        //TODO variable brains
+        return 4;
 
     }
     think(){
@@ -314,6 +362,9 @@ class Worm {
         if(this.inputToggles.energy){
             inputs.push(this.energy/this.MAX_ENERGY);
         }
+        if(this.inputToggles.inverse_energy){
+            inputs.push((this.MAX_ENERGY-this.energy)/this.MAX_ENERGY);
+        }
         if(this.inputToggles.body_feel){
             let stuffIsThere = this.feelForThings(nearbyFood).length>0?1:0;
             inputs.push(stuffIsThere);
@@ -330,7 +381,9 @@ class Worm {
         if(this.inputToggles.y_position){
             inputs.push(Math.abs(this.p.y-(height/2))/height) //distance from center
         }
-
+        if(this.inputToggles.num_of_appendages){
+            inputs.push(this.appendages.length/6) //uhh not sure TODO
+        }
         this.appendages.filter(x=>x.hasInput).forEach(part=>{
             let canSeeStuff = part.use(nearbyFood).length>0?1:0;
             if(PLZLOG){
@@ -339,6 +392,12 @@ class Worm {
             }
             inputs.push(canSeeStuff);
         });
+
+        //TODO variable brains
+        while(inputs.length<11){
+            inputs.push(0);
+        }
+
         return this.brain.predict(inputs);
     }
 
@@ -362,22 +421,22 @@ class Worm {
             if(this.outputToggles[order[i]]){
                 switch(order[i]){
                     case 'moveFwd':
-                        if(output>0.5){
-                            this.walk(2)
+                        if(output>0.3){
+                            this.walk(3*output)
                         }
                         break;
                     case 'turnLeft':
-                        if(output>0.3){
+                        if(output>0.1){
                             this.turn(-60*output);
                         }
                         break;
                     case 'turnRight':
-                        if(output>0.3){
+                        if(output>0.1){
                             this.turn(60*output);
                         }
                         break;
                     case 'eat':
-                        if(output>0.1){
+                        if(output>0.01){
                             this.eat(FOODQUAD.query(this.p.x,this.p.y,UNIT*3).map(x=>x.data))
                         }
                         break;
@@ -415,10 +474,26 @@ class Worm {
     }
 
     handleOOB() {
-        if (this.p.x < this.bounds.x1) this.p.x = this.bounds.x1;
-        if (this.p.x > this.bounds.x2) this.p.x = this.bounds.x2;
-        if (this.p.y < this.bounds.y1) this.p.y = this.bounds.y1;
-        if (this.p.y > this.bounds.y2) this.p.y = this.bounds.y2;
+        if (this.p.x < this.bounds.x1) {
+            this.p.x = this.bounds.x1;
+            this.energy-=1;
+            this.fitness-=0.01;
+        }
+        if (this.p.x > this.bounds.x2) {
+            this.p.x = this.bounds.x2;
+            this.energy-=1;
+            this.fitness-=0.01;
+        }
+        if (this.p.y < this.bounds.y1) {
+            this.p.y = this.bounds.y1;
+            this.energy-=1;
+            this.fitness-=0.01;
+        }
+        if (this.p.y > this.bounds.y2) {
+            this.p.y = this.bounds.y2;
+            this.energy-=1;
+            this.fitness-=0.01;
+        }
     }
 
     eat(arrayOfPoints) {
@@ -436,8 +511,8 @@ class Worm {
         if (potentials.length > 0) {
             let eaten = getRandom(potentials);
             eaten.eaten = true;
-            this.energy += eaten.energy;
-            this.fitness += eaten.energy;
+            this.energy += eaten.energy*2;
+            this.fitness += eaten.energy*1.1;
             return eaten;
         } else {
             return null
@@ -487,25 +562,127 @@ class Worm {
 
 
     getFitness(){
-        return this.fitness**2;
+        return this.fitness>0? this.fitness**2 : 0;
     }
 
     copy(){
         let worm = new Worm(this.origin_x,this.origin_y);
+        worm.DNA = this.DNA.copy();
+        worm.parseDNA();
         worm.brain = this.brain.copy();
-        this.appendages.forEach(part=>{
-            //TODO dictated by dna
-            if(part.hasInput){
-                worm.addAppendage(part.name,part.location);
-            }
-        });
-        worm.currentBehaviour = this.currentBehaviour;
         return worm
     }
 
-    TEMPsee(){
-        console.log(this.appendages[0].use(FOODQUAD.query(this.p.x,this.p.y,UNIT*6)))
+    setP(vector){
+        //since travel distance is needed for fitness, old_p and p must be the same on start
+        this.p = vector.copy();
+        this.old_p = vector.copy();
     }
 
+    log(){
+        console.group('worm')
+        console.log('Energy: ' + this.energy);
+        console.log('Fitness: ' + this.fitness);
+        console.log('CooldownNeeded: ' + this.restNeeded);
+        console.groupEnd()
+    }
+
+    createDNA(){
+        return new DNA(DNAstructure);
+    }
+
+    parseDNA(){
+        //this should be run first before anything else
+        let dna = this.DNA.values.map(x=>parseInt(x,16));
+        let debug = false;
+        //
+        // eye num 1
+        //1-3 eyes are needed so;
+        let eyeNum = 2; //TODO relative brain mixing
+        if(debug) console.log('eyenum', eyeNum);
+        // eye location 2
+        let locs = [];
+        let locsLog = [];
+        let nums = [5,2,3,1,4,0]; //guaranteed random
+        for(let i = 0; i<eyeNum; i++){
+            //get a random value from that above array, splice it out, find the corresponding location
+            locs.push(locations[nums.splice(dna[2]%(nums.length-1),1)[0]]);
+            locsLog.push(i)
+        }
+        if(debug) console.log('locs', locs,locsLog);
+        for(let i = 0; i<eyeNum; i++){
+            this.addAppendage('eye',locs[i]);
+        }
+        // cooldown 1
+        this.restNeeded = dna[2] %5 +1;
+        if(debug) console.log('restNeeded', this.restNeeded);
+        //
+        // #inputs#
+        //
+        // speed 1
+        // rotation: 1
+        // body_feel: 1
+        // energy: 1
+        // inverse_energy: 1
+        // constant: 1
+        // random: 1
+        // num_of_appendages: 1
+        // x_position: 1
+        // y_position: 1
+        // percentages will vary due to importance of some of these
+        this.inputToggles = {
+            speed: dna[3]>3,
+            rotation: dna[4]>7,
+            energy: dna[5]>7,
+            inverse_energy: dna[6]>7,
+            body_feel: dna[7]>2, //something in the hitbox
+            constant: dna[8]>7,
+            random: dna[9]>7,
+            num_of_appendages: false, //10 TODO
+            x_position: dna[11]>10, //11
+            y_position: dna[12]>10, //12
+        };
+        if(debug) console.log('this.inputToggles', this.inputToggles);
+        //
+        // max energy 2
+        this.MAX_ENERGY = (dna[13]/255)*100;
+        if(debug) console.log(' this.MAX_ENERGY ', this.MAX_ENERGY);
+        //
+        // #outputs#
+        //
+        // moveFwd: 1,
+        // turnLeft: 1,
+        // turnRight: 1,
+        // eat: 1,
+        //
+        this.outputToggles = {
+            moveFwd: dna[14]>1,
+            turnLeft: dna[15]>2,
+            turnRight: dna[16]>2,
+            eat: dna[17]>1,
+            breed: false,
+            moveBkwd: false,
+            changeBehaviour: false,
+        };
+
+        if(debug) console.log(' this.outputToggles ', this.outputToggles);
+        // #layer config#
+        //
+        // layers: 1,
+        // nodes: 1,
+        // activation0: 1,
+        // activation1: 1,
+        // activation2: 1,
+
+        this.layerConfig = {
+            layers: 1, //TODO relative brain mixing
+            nodes: this.calculateInputs()+ 2,
+            activation0: dna[20]>7? 'relu':'sigmoid',
+            activation1: dna[21]>7? 'relu':'sigmoid',
+            activation2: dna[22]>7? 'relu':'sigmoid',
+        };
+        if(debug) console.log(' this.layerConfig ', this.layerConfig);
+        this.isDnaParsed = true;
+    }
 
 }

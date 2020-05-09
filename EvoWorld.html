@@ -22,6 +22,7 @@
     <script language="javascript"  type="text/javascript" src="./lib/hitbox.js"></script>
     <script language="javascript"  type="text/javascript" src="./lib/nn.js"></script>
     <script language="javascript" type="text/javascript" src="./lib/quad.js"></script>
+    <script language="javascript" type="text/javascript" src="./dna.js"></script>
     <script language="javascript" type="text/javascript" src="./worm.js"></script>
     <script language="javascript" type="text/javascript" src="./appendage.js"></script>
     <script language="javascript" type="text/javascript" src="small_stuff.js"></script>
@@ -104,11 +105,18 @@
             }
         }
     }
+    function killAll(){
+        population.forEach(x=>x.dead = true);
+    }
     function runExtraDraws(){
 
     }
+    let global_overlay = null;
+    let looking_at = null;
     function lookAt(n){
-        population[n].TEMPFLASH();
+        stopLook();
+        looking_at = n;
+        population[n].TEMPGFX.shape.set('backgroundColor', 'blue');
         global_overlay = new nnOverlay(population[n].brain);
         global_overlay.init();
         runExtraDraws = function(){
@@ -118,8 +126,20 @@
     function stopLook(){
         if(global_overlay){
             global_overlay.destroy();
-            delete global_overlay;
+            population[looking_at].TEMPGFX.shape.set('backgroundColor', '#997722');
+            global_overlay = null;
+            looking_at = null;
             runExtraDraws = ()=>{};
+        }
+    }
+    function lookAtNext(){
+        if(looking_at){
+            lookAt((looking_at+1)%(POP_SIZE-1))
+        }
+    }
+    function lookAtPrev(){
+        if(looking_at){
+            lookAt((looking_at-1)%(POP_SIZE-1))
         }
     }
 
@@ -128,6 +148,7 @@
     function getNewGen(){
         genCount++;
         //HANDLE TEMP GRAPHICS
+        stopLook();
         population.forEach(worm=>{
             if(worm.TEMPGFX){
                 worm.TEMPGFX.shape.remove();
@@ -136,18 +157,17 @@
         id('gen_count').innerText = genCount;
 
 
+        for(let i = 0; i<20; i++){
+            let foodPiece = new FoodPiece(new Vector(getRandom(50,width-50), getRandom(50, height-50)),getRandom(1,4));
+            FOODQUAD.addItem(foodPiece.p.copy(), foodPiece);
+            food.push(foodPiece);
+        }
+
         //HANDLE LOGIC
         let fittest = getFittest(population);
-        population = [];
-        for(let i = 0; i<POP_SIZE-1; i++){
-            let newWorm = fittest.copy();
-            newWorm.p = Vector.random(width,height);
-            newWorm.brain.mutate(0.01,0.1);
-            newWorm.brain.mutate(0.05,0.05);
-            newWorm.brain.mutate(0.05,0.01);
-            population.push(newWorm);
-        }
-        population.push(fittest.copy());
+        console.log('most fit: ' + fittest.fitness);
+        let temp = Array.from(population);
+        population = chooseFittestAndMix(temp);
     }
 
     function getFittest(population){
@@ -158,6 +178,60 @@
                 return b;
             }
         });
+    }
+
+    function chooseFittestAndMix(arrayOfPops){
+        let parents = [];
+        let newPopulation = [];
+        for(let i = 0; i<2; i++){
+            let sum= arrayOfPops.reduce((tot,a)=>tot+a.getFitness(),0);
+            let chosen = Math.random()*(sum+1);
+            let found = false;
+            let parent = arrayOfPops.reduce((tot,a)=>{
+                if(!found){
+                    tot+=a.getFitness();
+                    if(tot>chosen){
+                        found = true;
+                        return a;
+                    }else{
+                        return tot;
+                    }
+
+                }else{
+                    return tot;
+                }
+            },1);
+            found = false;
+            arrayOfPops.splice(arrayOfPops.indexOf(parent),1);
+            parents.push(parent);
+        }
+        for(let i=0; i<POP_SIZE-3; i++){
+            let rand = parents[0];
+            let rand2 = parents[1];
+            let dominant = Math.random()*2 |0;
+            let newdude = parents[1-dominant].copy();
+            newdude.init();
+            newdude.setP(Vector.random(width,height));
+            newdude.brain = newdude.brain.mix(parents[dominant].brain,2);
+            newdude.brain.mutate(0.1,0.05);
+            newdude.brain.mutate(0.05,0.07);
+            newdude.brain.mutate(0.01,0.12);
+            newPopulation.push(newdude);
+        }
+        let par1 = parents[0].copy();
+        par1.init();
+        par1.setP(Vector.random(width,height));
+        newPopulation.push(par1);
+        let par2 = parents[1].copy();
+        par2.init();
+        par2.setP(Vector.random(width,height));
+        newPopulation.push(par2);
+        let newWorm = new Worm(0,0);
+        newWorm.init();
+        newWorm.setP(Vector.random(width,height));
+        newPopulation.push(newWorm);
+
+        return newPopulation;
     }
 
     //quad needed for performace in the future
@@ -176,35 +250,33 @@
         let foodPiece = new FoodPiece(new Vector(x,y),getRandom(1,4));
         FOODQUAD.addItem(foodPiece.p.copy(), foodPiece);
         food.push(foodPiece);
-        console.log('blop', x, y)
     });
     function setupLogic(){
         return new Promise(resolve=>{
-            QUAD = new Quad(width,height,0,0);
+            QUAD = new Quad(0,0,width,height);
             for(let i = 0; i<POP_SIZE; i++){
                 let w = new Worm(getRandom(100,width-100), getRandom(100,height-100));
-                w.currentBehaviour = '';
-                w.addAppendage('eye','head');
                 w.init();
                 QUAD.addItem(w.p.copy(),w);
                 population.push(w);
             }
-            FOODQUAD = new Quad(width,height,0,0);
+            FOODQUAD = new Quad(0,0,width,height);
             for(let i = 0; i<FOOD_AMOUNT; i++){
                 let foodPiece = new FoodPiece(new Vector(getRandom(50,width-50), getRandom(50, height-50)),getRandom(1,4));
                 FOODQUAD.addItem(foodPiece.p.copy(), foodPiece);
                 food.push(foodPiece);
             }
+           // console.log(FOODQUAD.getAllPoints().map(x=>x.data))
             resolve(true);
         })
     }
-    let deadCounter = 0;
+    let deadCounter = Array(POP_SIZE).fill(false);
     function doLogic(dt){
         return new Promise(resolve=>{
             for(let i = population.length-1; i>=0; i--){
                 population[i].update(dt);
                 if(population[i].dead){
-                    deadCounter++;
+                    deadCounter[i] = true;
                 }
                 for(let j = population[i].appendages.length-1; j>=0; j--){
                     if(population[i].appendages[j].dead){
@@ -212,9 +284,15 @@
                     }
                 }
             }
-            if(deadCounter-1>=POP_SIZE){
-                deadCounter = 0;
+            if(deadCounter.reduce((tot,a)=>tot+(a?1:0),0) >= POP_SIZE-1){
+                deadCounter = Array(POP_SIZE).fill(false);
                 getNewGen();
+            }
+            for(let i= food.length-1; i>=0; i--){
+                if(food[i].eaten && food[i].TEMPGFX && food[i].TEMPGFX.safeToRemove){
+                    FOODQUAD.removeItem(food[i].p);
+                    food.splice(i,1)
+                }
             }
             resolve(true);
         })
@@ -227,6 +305,10 @@
                 if(!worm.TEMPGFX){
                     worm.TEMPGFX = {};
                     worm.TEMPGFX.shape = tempGFX.create('worm');
+                    worm.TEMPGFX.shape.shape.addEventListener('click',()=>{
+                        lookAt(population.indexOf(worm))
+                        worm.log();
+                    });
                     worm.TEMPGFX.appendages = [];
                 }
                 worm.TEMPGFX.shape.moveTo(worm.p);
@@ -263,6 +345,7 @@
                 }
                 if(piece.eaten && piece.TEMPGFX){
                     piece.TEMPGFX.shape.remove();
+                    piece.TEMPGFX.safeToRemove = true;
                 }
             });
 
