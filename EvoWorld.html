@@ -11,6 +11,7 @@
         let FRICTION_COEFF = .1;
         let SPEED_LIMIT = 400;
         let FOOD_AMOUNT = 150;
+        let FOOD_ADDED = 40;
         let TICK_DECAY = 0.1;
         let PLZLOG = false;
         let NEW_WORMS_PER_GEN = 3;
@@ -28,11 +29,107 @@
     <script language="javascript" type="text/javascript" src="./worm.js"></script>
     <script language="javascript" type="text/javascript" src="./appendage.js"></script>
     <script language="javascript" type="text/javascript" src="small_stuff.js"></script>
+    <style>
+        p, label {
+            font-size: 0.8em;
+            color: white;
+            font-weight: bold;
+            padding: 0;
+            margin: 3px;
+            user-select: none;
+        }
+
+        span {
+            white-space: pre;
+        }
+
+        input {
+            autocomplete = "off";
+        }
+
+        #background {
+            height: 100vh;
+            width: 100vw;
+            background-color: darkgreen;
+            z-index: 0;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .menu {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            z-index: 10;
+            display: grid;
+            max-width: 10vw;
+            grid-template-columns: auto;
+            grid-template-rows: auto auto auto;
+            grid-template-areas: "toggle" "stats" "inputs";
+        }
+
+        .inputs {
+            grid-area: inputs;
+        }
+
+        .stats {
+            display: flex;
+            flex-direction: column;
+            grid-area: stats;
+        }
+        .explantation{
+            font-weight: normal;
+            font-size: 0.8em;
+        }
+        .toggle {
+            font-size: 1em;
+            color: white;
+            grid-area: toggle;
+            cursor: pointer;
+            align-self: end;
+            background-color: grey;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            border: solid white 1px;
+            text-align: center;
+            font-weight: bolder;
+        }
+    </style>
 </head>
 <body>
-<p style="font-size: 0.5em; color: white; font-weight: bold"> fps: <span id="framerate">0</span></p>
-<p style="font-size: 0.5em; color: white; font-weight: bold"> gen: <span id="gen_count">0</span></p>
-<p style="font-size: 0.5em; color: white; font-weight: bold"> worms alive: <span id="worms_alive">0</span></p>
+<div id="background"></div>
+<div class="menu" id="mainmenu">
+    <div class="toggle" id="togglemenu">^</div>
+    <div class="stats" id="statmenu">
+        <p> fps: <span id="framerate">0</span></p>
+        <p> gen: <span id="gen_count">0</span></p>
+        <p> worms alive: <span id="worms_alive">0</span></p>
+    </div>
+    <div class="inputs" id="inputmenu" style="display: flex; flex-direction: column; max-width: 10vw;">
+        <label for="POP_SIZE">Population: </label>
+        <input id="POP_SIZE" type="number" value="50">
+        <label for="NEW_WORMS_PER_GEN">New worms added each gen: </label>
+        <input id="NEW_WORMS_PER_GEN" type="number" value="3">
+        <label for="FOOD_AMOUNT">Initial Food Amount: </label>
+        <input id="FOOD_AMOUNT" type="number" value="150">
+        <label for="FOOD_ADDED">Food added each gen: </label>
+        <input id="FOOD_ADDED" type="number" value="50">
+        <label for="TICK_DECAY">Energy decay:<span id="TICK_DECAY_show">0.1</span></label>
+        <input id="TICK_DECAY" type="range" min="0" max="5" value="0.1" step="0.05">
+        <label for="SPEED_LIMIT">Speed Limit: <span id="SPEED_LIMIT_show">0.1</span></label>
+        <input id="SPEED_LIMIT" type="range" min="1" max="2000" value="400">
+        <label for="SKIP_DRAW">Draw Worms: (will speed up if not drawn)</label>
+        <input id="SKIP_DRAW" type="checkbox" checked="checked">
+        <button id="reset">reset</button>
+    </div>
+    <div class="explantation" id="explmenu">
+        <p>Click on a worm to see its brain in action. Its inputs are turned on different by its genetics, outputs are always [go,left,right,eat]</p>
+        <p>click on the ground to add more food</p>
+        <p>worms will get fatter if they eat more than 100 energy</p>
+    </div>
+</div>
 
 <script>
     LOOPING = true;
@@ -115,15 +212,43 @@
     function killAll() {
         population.forEach(x => x.dead = true);
     }
-    function isFoodOK(){
-        let [a,b] = [FOODQUAD.length, food.length];
-        console.log(`%cSeems ${a===b?'ok': 'not ok'}, ${a} to ${b}`,`color:${a===b?'green':'red'}`)
 
+    function isFoodOK() {
+        let [a, b] = [FOODQUAD.length, food.length];
+        console.log(`%cSeems ${a === b ? 'ok' : 'not ok'}, ${a} to ${b}`, `color:${a === b ? 'green' : 'red'}`)
     }
 
-    function runExtraDraws() {
+    let menu_collapsed = false;
 
+    function toggleMenu() {
+        if (!menu_collapsed) {
+            //collapse
+            id('inputmenu').style.display = 'none';
+            id('explmenu').style.display = 'none';
+            id('statmenu').style.flexDirection = 'row';
+            id('statmenu').style.height = '20px';
+            id('statmenu').style.maxWidth = width + 'px';
+            id('togglemenu').innerText = 'v';
+            id('mainmenu').style.gridTemplateAreas = '"toggle stats"';
+            id('mainmenu').style.gridTemplateRows = 'auto';
+            id('mainmenu').style.gridTemplateColumns = 'auto auto';
+            id('mainmenu').style.maxWidth = width + 'px';
+        } else {
+            //expand
+            id('statmenu').style.height = '';
+            id('statmenu').style.maxWidth = '';
+            id('statmenu').style.flexDirection = '';
+            id('inputmenu').style.display = '';
+            id('togglemenu').innerText = '^';
+            id('mainmenu').style.gridTemplateAreas = '"toggle" "stats" "inputs"';
+            id('mainmenu').style.gridTemplateRows = 'auto auto auto';
+            id('mainmenu').style.gridTemplateColumns = 'auto';
+            id('mainmenu').style.maxWidth = '10vw';
+            id('explmenu').style.display = '';
+        }
+        menu_collapsed = !menu_collapsed
     }
+
 
     let global_overlay = null;
     let looking_at = null;
@@ -134,9 +259,6 @@
         population[n].TEMPGFX.shape.set('backgroundColor', 'blue');
         global_overlay = new nnOverlay(population[n].brain);
         global_overlay.init();
-        runExtraDraws = function () {
-            global_overlay.draw();
-        }
     }
 
     function stopLook() {
@@ -145,8 +267,6 @@
             population[looking_at].TEMPGFX.shape.set('backgroundColor', '#997722');
             global_overlay = null;
             looking_at = null;
-            runExtraDraws = () => {
-            };
         }
     }
 
@@ -177,8 +297,7 @@
         id('gen_count').innerText = genCount;
 
 
-        let foodToAdd = food.length <30? 80:20;
-        for (let i = 0; i < foodToAdd; i++) {
+        for (let i = 0; i < FOOD_ADDED; i++) {
             let foodPiece = new FoodPiece(new Vector(getRandom(50, width - 50), getRandom(50, height - 50)), getRandom(1, 4));
             FOODQUAD.addItem(foodPiece.p.copy(), foodPiece);
             food.push(foodPiece);
@@ -263,13 +382,67 @@
 
     function setupDraw() {
         return new Promise(resolve => {
-            document.body.style.backgroundColor = 'darkgreen';
+            id('togglemenu').addEventListener('click', toggleMenu)
             id('worms_alive').innerText = population.length;
+            id('SPEED_LIMIT_show').innerText = SPEED_LIMIT;
+            id('TICK_DECAY_show').innerText = TICK_DECAY;
+            id('POP_SIZE').value = POP_SIZE;
+            id('TICK_DECAY').value = TICK_DECAY;
+            id('SPEED_LIMIT').value = SPEED_LIMIT;
+            id('FOOD_AMOUNT').value = FOOD_AMOUNT;
+            id('NEW_WORMS_PER_GEN').value = NEW_WORMS_PER_GEN;
+            id('SKIP_DRAW').checked = !SKIP_DRAW;
+            id('FOOD_ADDED').value = FOOD_ADDED;
+            id('POP_SIZE').addEventListener('input', (e) => {
+                POP_SIZE = id('POP_SIZE').value;
+            });
+            id('TICK_DECAY').addEventListener('input', (e) => {
+                TICK_DECAY = id('TICK_DECAY').value;
+                id('TICK_DECAY_show').innerText = id('TICK_DECAY').value
+            });
+            id('SPEED_LIMIT').addEventListener('input', (e) => {
+                id('SPEED_LIMIT_show').innerText = id('SPEED_LIMIT').value;
+                SPEED_LIMIT = id('SPEED_LIMIT').value;
+            });
+            id('FOOD_AMOUNT').addEventListener('input', (e) => {
+                FOOD_AMOUNT = id('FOOD_AMOUNT').value;
+            });
+            id('NEW_WORMS_PER_GEN').addEventListener('input', (e) => {
+                NEW_WORMS_PER_GEN = id('NEW_WORMS_PER_GEN').value;
+
+            });
+            id('SKIP_DRAW').addEventListener('input', (e) => {
+                SKIP_DRAW = !id('SKIP_DRAW').checked;
+            });
+            id('FOOD_ADDED').addEventListener('input', (e) => {
+                FOOD_ADDED = e.value;
+            });
+            id('reset').addEventListener('click', () => {
+                stop();
+                stopLook();
+                population.forEach(worm => {
+                    if (worm.TEMPGFX) {
+                        worm.TEMPGFX.shape.remove();
+                    }
+                });
+                food.forEach(piece => {
+                    if (piece.TEMPGFX) {
+                        piece.TEMPGFX.shape.remove();
+                    }
+                });
+                population = [];
+                food = [];
+                QUAD.clear();
+                FOODQUAD.clear();
+                genCount = 0;
+                LOOPING = true;
+                start();
+            });
             resolve(true);
         })
     }
 
-    document.addEventListener('click', e => {
+    id('background').addEventListener('click', e => {
         let x = e.clientX;
         let y = e.clientY;
         let foodPiece = new FoodPiece(new Vector(x, y), getRandom(1, 4));
@@ -306,7 +479,7 @@
                     }
                 }
             }
-            let deadnum = population.reduce((tot, a) => tot + (a.dead ? 1 : 0), 0) ;
+            let deadnum = population.reduce((tot, a) => tot + (a.dead ? 1 : 0), 0);
             id('worms_alive').innerText = population.length - deadnum;
             if (deadnum >= POP_SIZE - 1) {
                 getNewGen();
@@ -325,7 +498,7 @@
 
     function doDraw() {
         return new Promise(resolve => {
-            runExtraDraws();
+            if (looking_at) global_overlay.draw();
             if (SKIP_DRAW) {
                 resolve(true);
                 return;
@@ -388,10 +561,18 @@
 
     let prev_time = 0;
 
+    function padSpace(text, val) {
+        let a = text.toString();
+        while (a.length < (val)) {
+            a = '  ' + a;
+        }
+        return a;
+    }
+
     function loop(now) {
         //fps calc
         let delta_time = now - prev_time;
-        id('framerate').innerText = 1000 / (delta_time) | 0;
+        id('framerate').innerText = padSpace(1000 / (delta_time) | 0, 2);
         prev_time = now;
 
         doLogic(delta_time).then(() => {
