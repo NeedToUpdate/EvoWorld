@@ -214,7 +214,7 @@ class Worm {
         if (number > 0) {
             if (this.addFat()) {
                 this.energy += number;
-                console.log('energy is at ' + this.energy)
+                //console.log('energy is at ' + this.energy)
             }
         }
 
