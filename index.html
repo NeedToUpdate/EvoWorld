@@ -37,6 +37,7 @@
             padding: 0;
             margin: 3px;
             user-select: none;
+            word-wrap: break-spaces;
         }
 
         span {
@@ -44,7 +45,7 @@
         }
 
         input {
-            autocomplete = "off";
+            autocomplete: "off";
         }
 
         #background {
@@ -57,13 +58,17 @@
             left: 0;
         }
 
+        .num_input {
+            width: 80px;
+        }
+
         .menu {
             position: fixed;
             top: 10px;
             left: 10px;
             z-index: 10;
             display: grid;
-            max-width: 10vw;
+            max-width: 40vw;
             grid-template-columns: auto;
             grid-template-rows: auto auto auto;
             grid-template-areas: "toggle" "stats" "inputs";
@@ -71,6 +76,8 @@
 
         .inputs {
             grid-area: inputs;
+            display: flex;
+            flex-direction: column;
         }
 
         .stats {
@@ -78,10 +85,12 @@
             flex-direction: column;
             grid-area: stats;
         }
-        .explantation{
+
+        .explantation {
             font-weight: normal;
             font-size: 0.8em;
         }
+
         .toggle {
             font-size: 1em;
             color: white;
@@ -96,6 +105,20 @@
             text-align: center;
             font-weight: bolder;
         }
+
+        .range_input {
+            max-width: 100px;
+        }
+
+        button {
+            max-width: 60px;
+        }
+
+        #SKIP_DRAW {
+            margin: 10px;
+            padding: 0;
+            align-self: start;
+        }
     </style>
 </head>
 <body>
@@ -107,25 +130,26 @@
         <p> gen: <span id="gen_count">0</span></p>
         <p> worms alive: <span id="worms_alive">0</span></p>
     </div>
-    <div class="inputs" id="inputmenu" style="display: flex; flex-direction: column; max-width: 10vw;">
+    <div class="inputs" id="inputmenu">
         <label for="POP_SIZE">Population: </label>
-        <input id="POP_SIZE" type="number" value="50">
+        <input class="num_input" id="POP_SIZE" type="number" value="50">
         <label for="NEW_WORMS_PER_GEN">New worms added each gen: </label>
-        <input id="NEW_WORMS_PER_GEN" type="number" value="3">
+        <input class="num_input" id="NEW_WORMS_PER_GEN" type="number" value="3">
         <label for="FOOD_AMOUNT">Initial Food Amount: </label>
-        <input id="FOOD_AMOUNT" type="number" value="150">
+        <input class="num_input" id="FOOD_AMOUNT" type="number" value="150">
         <label for="FOOD_ADDED">Food added each gen: </label>
-        <input id="FOOD_ADDED" type="number" value="50">
+        <input class="num_input" id="FOOD_ADDED" type="number" value="50">
         <label for="TICK_DECAY">Energy decay:<span id="TICK_DECAY_show">0.1</span></label>
-        <input id="TICK_DECAY" type="range" min="0" max="5" value="0.1" step="0.05">
+        <input class="range_input" id="TICK_DECAY" type="range" min="0" max="5" value="0.1" step="0.05">
         <label for="SPEED_LIMIT">Speed Limit: <span id="SPEED_LIMIT_show">0.1</span></label>
-        <input id="SPEED_LIMIT" type="range" min="1" max="2000" value="400">
+        <input class="range_input" id="SPEED_LIMIT" type="range" min="1" max="2000" value="400">
         <label for="SKIP_DRAW">Draw Worms: (will speed up if not drawn)</label>
         <input id="SKIP_DRAW" type="checkbox" checked="checked">
         <button id="reset">reset</button>
     </div>
     <div class="explantation" id="explmenu">
-        <p>Click on a worm to see its brain in action. Its inputs are turned on different by its genetics, outputs are always [go,left,right,eat]</p>
+        <p>Click on a worm to see its brain in action. Its inputs are turned on different by its genetics, outputs are
+            always [go,left,right,eat]</p>
         <p>click on the ground to add more food</p>
         <p>worms will get fatter if they eat more than 100 energy</p>
     </div>
@@ -145,7 +169,7 @@
     };
     let hitboxes_toggle = false;
 
-    let fitness_maxes = []
+    let fitness_maxes = [];
 
     function toggleHitboxes() {
         if (hitboxes_toggle) {
@@ -200,7 +224,7 @@
                     let fat = new Div(fatOffset.x, fatOffset.y, '#886611', UNIT / 2);
                     fat.set('height', UNIT * 2 / 3 | 0 + 'px');
                     fat.set('borderRadius', '50% 50% 0 0 / 100% 100% 0 0');
-                    fat.set('borderBottom', 'transparent')
+                    fat.set('borderBottom', 'transparent');
                     fat.set('backgroundColor', '#997722');
                     fat.part = {name: name, location: location};
                     fat.rotateTo(fatRotation);
@@ -243,7 +267,7 @@
             id('mainmenu').style.gridTemplateAreas = '"toggle" "stats" "inputs"';
             id('mainmenu').style.gridTemplateRows = 'auto auto auto';
             id('mainmenu').style.gridTemplateColumns = 'auto';
-            id('mainmenu').style.maxWidth = '10vw';
+            id('mainmenu').style.maxWidth = '40vw';
             id('explmenu').style.display = '';
         }
         menu_collapsed = !menu_collapsed
@@ -382,7 +406,7 @@
 
     function setupDraw() {
         return new Promise(resolve => {
-            id('togglemenu').addEventListener('click', toggleMenu)
+            id('togglemenu').addEventListener('click', toggleMenu);
             id('worms_alive').innerText = population.length;
             id('SPEED_LIMIT_show').innerText = SPEED_LIMIT;
             id('TICK_DECAY_show').innerText = TICK_DECAY;
@@ -415,7 +439,7 @@
                 SKIP_DRAW = !id('SKIP_DRAW').checked;
             });
             id('FOOD_ADDED').addEventListener('input', (e) => {
-                FOOD_ADDED = e.value;
+                FOOD_ADDED = id('FOOD_ADDED').value;
             });
             id('reset').addEventListener('click', () => {
                 stop();
@@ -509,7 +533,7 @@
                     worm.TEMPGFX = {};
                     worm.TEMPGFX.shape = tempGFX.create('worm');
                     worm.TEMPGFX.shape.shape.addEventListener('click', () => {
-                        lookAt(population.indexOf(worm))
+                        lookAt(population.indexOf(worm));
                         worm.log();
                     });
                     worm.TEMPGFX.appendages = [];

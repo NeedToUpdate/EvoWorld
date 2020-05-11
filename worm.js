@@ -142,7 +142,7 @@ class Worm {
             this.a.add(a_fric);
         }
         this.v.add(this.a.copy().mult(dt));
-        let v_fric = this.v.copy().mult(-1 * FRICTION_COEFF * Math.sqrt(dt))
+        let v_fric = this.v.copy().mult(-1 * FRICTION_COEFF * Math.sqrt(dt));
         if(v_fric.mag()>this.v.mag()) {
             this.v.clear()
         }else{
@@ -399,7 +399,7 @@ class Worm {
         this.appendages.filter(x => x.hasInput).forEach(part => {
             let canSeeStuff = part.use(nearbyFood).length > 0 ? 1 : 0;
             if (PLZLOG) {
-                console.log(canSeeStuff, nearbyFood, part.use(nearbyFood))
+                console.log(canSeeStuff, nearbyFood, part.use(nearbyFood));
                 PLZLOG = false;
             }
             inputs.push(canSeeStuff);
@@ -532,7 +532,7 @@ class Worm {
             location = this.getFreeAppendageLocation();
         }
         if (this.getFreeAppendageLocation() === null) {
-            console.log(`[worm] theres no room for a new appendage`)
+            console.log(`[worm] theres no room for a new appendage`);
             return;
         }
         appendage.p = this.p;
@@ -583,7 +583,7 @@ class Worm {
     }
 
     log() {
-        console.group('worm')
+        console.group('worm');
         console.log('Energy: ' + this.energy);
         console.log('Fitness: ' + this.fitness);
         console.log('CooldownNeeded: ' + this.restNeeded);
@@ -612,7 +612,7 @@ class Worm {
         let nums = [5, 2, 3, 1, 4]; //guaranteed random
         for (let i = 0; i < eyeNum; i++) {
             //get a random value from that above array, splice it out, find the corresponding location
-            let loc = locations[nums.splice(dna[2] % (nums.length - 1), 1)[0]]
+            let loc = locations[nums.splice(dna[2] % (nums.length - 1), 1)[0]];
             locs.push((i===0)?'head':loc);
             locsLog.push(i)
             //TODO for now first eye will always be on head
