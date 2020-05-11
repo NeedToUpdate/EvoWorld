@@ -134,9 +134,20 @@ class Worm {
         }
         //dt scaling to make the numbers kinda work well
         dt = dt / (UNIT * 3);
-        this.a.add(this.a.copy().mult(-2 * FRICTION_COEFF));
+        //dt is from like 3 to 20
+        let a_fric = this.a.copy().mult(-2 * FRICTION_COEFF * Math.sqrt(dt));
+        if(a_fric.mag()>this.a.mag()) {
+            this.a.clear()
+        }else{
+            this.a.add(a_fric);
+        }
         this.v.add(this.a.copy().mult(dt));
-        this.v.add(this.v.copy().mult(-1 * FRICTION_COEFF));
+        let v_fric = this.v.copy().mult(-1 * FRICTION_COEFF * Math.sqrt(dt))
+        if(v_fric.mag()>this.v.mag()) {
+            this.v.clear()
+        }else{
+            this.v.add(v_fric);
+        }
         let real_v = this.v.copy().add(this.old_v).div(2);
         real_v.mult(dt).limit(SPEED_LIMIT);
         this.p.add(real_v);
@@ -427,13 +438,13 @@ class Worm {
                         }
                         break;
                     case 'turnLeft':
-                        if (output > 0.1) {
-                            this.turn(-60 * output);
+                        if (output > 0.4) {
+                            this.turn(-60 * (output-0.4));
                         }
                         break;
                     case 'turnRight':
-                        if (output > 0.1) {
-                            this.turn(60 * output);
+                        if (output > 0.4) {
+                            this.turn(60 * (output-0.4));
                         }
                         break;
                     case 'eat':
@@ -598,11 +609,13 @@ class Worm {
         // eye location 2
         let locs = [];
         let locsLog = [];
-        let nums = [5, 2, 3, 1, 4, 0]; //guaranteed random
+        let nums = [5, 2, 3, 1, 4]; //guaranteed random
         for (let i = 0; i < eyeNum; i++) {
             //get a random value from that above array, splice it out, find the corresponding location
-            locs.push(locations[nums.splice(dna[2] % (nums.length - 1), 1)[0]]);
+            let loc = locations[nums.splice(dna[2] % (nums.length - 1), 1)[0]]
+            locs.push((i===0)?'head':loc);
             locsLog.push(i)
+            //TODO for now first eye will always be on head
         }
         if (debug) console.log('locs', locs, locsLog);
         for (let i = 0; i < eyeNum; i++) {
