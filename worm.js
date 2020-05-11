@@ -637,7 +637,7 @@ class Worm {
         // x_position: 1
         // y_position: 1
         // percentages will vary due to importance of some of these
-        
+
         this.inputToggles = {
             speed: dna[3] > 3,
             rotation: dna[4] > 7,

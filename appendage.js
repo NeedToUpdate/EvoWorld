@@ -70,8 +70,7 @@ class Eye extends Appendage{
         this.r = r + this.r_offset;
         this.hitbox.moveTo(this.p.copy().add(this.offset));
         this.hitbox.rotateTo(this.r,this.p.x+UNIT/2,this.p.y+UNIT);
-        //tODO remove later
-        this.hitbox.draw();
+        if(this.hitbox.drawn) this.hitbox.draw();
     }
     remove(){
         this.hitbox.destroy();
