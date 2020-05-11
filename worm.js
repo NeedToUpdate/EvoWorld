@@ -89,7 +89,7 @@ class Worm {
             turnLeft: true,
             turnRight: true,
             eat: true,
-            breed: false,
+            clone: false,
             moveBkwd: false,
             changeBehaviour: false,
         };
@@ -324,7 +324,6 @@ class Worm {
         //next few might be controlled later on by their dna idk
         //here would be the code that conrolls the input toggles
 
-
         // counts the number of true in the top object and sums them and adds to inputs
         inputs += Object.values(this.inputToggles).reduce((tot, a) => tot + (a ? 1 : 0), 0);
         //TODO variable brains
@@ -420,7 +419,7 @@ class Worm {
             turnLeft: true,
             turnRight: true,
             eat: true,
-            breed: false,
+            clone: false,
             moveBkwd: false,
             changeBehaviour: false,
         };
@@ -638,6 +637,7 @@ class Worm {
         // x_position: 1
         // y_position: 1
         // percentages will vary due to importance of some of these
+        
         this.inputToggles = {
             speed: dna[3] > 3,
             rotation: dna[4] > 7,
@@ -668,7 +668,7 @@ class Worm {
             turnLeft: dna[15] > 2,
             turnRight: dna[16] > 2,
             eat: dna[17] > 1,
-            breed: false,
+            clone: false,
             moveBkwd: false,
             changeBehaviour: false,
         };
@@ -685,7 +685,7 @@ class Worm {
         this.layerConfig = {
             layers: 1, //TODO relative brain mixing
             nodes: this.calculateInputs() + 2,
-            activation0: dna[20] > 7 ? 'relu' : 'sigmoid',
+            activation0: dna[20] > 7 ? 'relu' : 'sigmoid', //maybe add tanh
             activation1: dna[21] > 7 ? 'relu' : 'sigmoid',
             activation2: dna[22] > 7 ? 'relu' : 'sigmoid',
         };
