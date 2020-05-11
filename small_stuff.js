@@ -1,4 +1,4 @@
-class MemoryPiece{
+class MemoryPiece{ //TODO perhaps can delete this
     constructor(vector,name){
         this.location = vector;
         this.name = name;
