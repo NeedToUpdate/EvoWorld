@@ -108,7 +108,9 @@ class Worm {
 
   init() {
     if (!this.isDnaParsed) {
-      this.DNA = this.createDNA();
+      if (Object.keys(this.DNA).length === 0) {
+        this.DNA = this.createDNA();
+      }
       this.parseDNA();
     }
     if (Object.keys(this.brain).length === 0) this.brain = this.createBrain();
@@ -298,7 +300,11 @@ class Worm {
   }
 
   createBrain() {
-    let brain = new NeuralNetwork(this.calculateInputs());
+    let num_of_inputs = this.calculateInputs();
+    if (!num_of_inputs) {
+      (this.dead = true), (num_of_inputs = 1);
+    }
+    let brain = new NeuralNetwork(num_of_inputs);
     //the following also might be controlled by dna idk
 
     for (let i = 0; i < this.layerConfig.layers; i++) {
@@ -306,7 +312,11 @@ class Worm {
     }
 
     //outputs might be different later on due to outputable appendages
-    brain.addLayer(this.calculateOutputs(), "dense", { activation_fn: "relu" });
+    let num_of_outputs = this.calculateOutputs();
+    if (!num_of_outputs) {
+      (this.dead = true), (num_of_outputs = 1);
+    }
+    brain.addLayer(num_of_outputs, "dense", { activation_fn: "relu" });
     brain.init();
     brain.randomizeAll();
     return brain;
@@ -595,7 +605,7 @@ class Worm {
     //
     // eye num 1
     //1-3 eyes are needed so;
-    let eyeNum = 2; //TODO relative brain mixing
+    let eyeNum = (1, (dna[0] / 4) | 0);
     if (debug) console.log("eyenum", eyeNum);
     // eye location 2
     let locs = [];

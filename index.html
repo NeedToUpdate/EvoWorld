@@ -294,9 +294,9 @@
                         return eye;
                     case 'worm':
                         let body = new Div(0, 0, 'transparent', UNIT, UNIT * 2, true);
-                        let line = new DivLine(0, UNIT * 2 / 3, UNIT, null, '#886611');
-                        let line2 = new DivLine(0, UNIT * 4 / 3, UNIT, null, '#886611');
-                        body.set('backgroundColor', '#997722');
+                        let line = new DivLine(0, UNIT * 2 / 3, UNIT, null, 'rgb(0, 196, 186)');
+                        let line2 = new DivLine(0, UNIT * 4 / 3, UNIT, null, 'rgb(0, 196, 186)');
+                        body.set('backgroundColor', 'rgb(0, 243, 255)');
                         body.set('borderRadius', UNIT / 2 + 'px');
                         body.add(line);
                         body.add(line2);
@@ -304,11 +304,11 @@
                     case 'fat':
                         let fatOffset = gfxoffsets[location].p.copy().add(Vector.fromAngle(gfxoffsets[location].r).set(UNIT / 3));
                         let fatRotation = gfxoffsets[location].r;
-                        let fat = new Div(fatOffset.x, fatOffset.y, '#886611', UNIT / 2);
+                        let fat = new Div(fatOffset.x, fatOffset.y, 'rgb(0, 196, 186)', UNIT / 2);
                         fat.set('height', UNIT / 1.5 + 'px');
                         fat.set('borderRadius', '50% 50% 0 0 / 100% 100% 0 0');
                         fat.set('borderBottom', 'transparent');
-                        fat.set('backgroundColor', '#997722');
+                        fat.set('backgroundColor', 'rgb(0, 243, 255)');
                         fat.part = {
                             name: name,
                             location: location
@@ -374,7 +374,7 @@
         function stopLook() {
             if (global_overlay) {
                 global_overlay.destroy();
-                population[looking_at].TEMPGFX.shape.set('backgroundColor', '#997722');
+                population[looking_at].TEMPGFX.shape.set('backgroundColor', 'rgb(0, 243, 255)');
                 global_overlay = null;
                 looking_at = null;
             }
@@ -474,6 +474,9 @@
                 let rand = parents[0];
 
                 let newdude = rand.copy();
+                if (Math.random() < 0.05) {
+                    newdude.DNA = newdude.DNA.createMutation(0.5)
+                }
                 newdude.init();
                 newdude.setP(Vector.random(width, height));
                 newdude.brain.mutate(0.2, 0.06);
