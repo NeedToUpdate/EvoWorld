@@ -80,6 +80,7 @@ class Worm {
       body_feel: true, //something in the hitbox
       constant: true,
       random: true,
+      random2: true,
       num_of_appendages: false,
       x_position: false,
       y_position: false,
@@ -397,6 +398,9 @@ class Worm {
     if (this.inputToggles.random) {
       inputs.push(Math.random());
     }
+    if (this.inputToggles.random2) {
+      inputs.push(Math.random());
+    }
     if (this.inputToggles.x_position) {
       inputs.push(Math.abs(this.p.x - width / 2) / width); //distance from center
     }
@@ -641,16 +645,17 @@ class Worm {
     // percentages will vary due to importance of some of these
 
     this.inputToggles = {
-      speed: dna[3] > 3,
-      rotation: dna[4] > 7,
-      energy: dna[5] > 7,
-      inverse_energy: dna[6] > 7,
-      body_feel: dna[7] > 2, //something in the hitbox
-      constant: dna[8] > 7,
-      random: dna[9] > 7,
+      speed: dna[3] >= 3,
+      rotation: dna[4] >= 7,
+      energy: dna[5] >= 7,
+      inverse_energy: dna[6] >= 7,
+      body_feel: dna[7] >= 0, //something in the hitbox //should always exist
+      constant: dna[8] >= 7,
+      random: dna[9] >= 7,
+      random2: dna[10] >= 7,
       num_of_appendages: false, //10 TODO
-      x_position: dna[11] > 10, //11
-      y_position: dna[12] > 10, //12
+      x_position: dna[11] >= 10, //11
+      y_position: dna[12] >= 10, //12
     };
     if (debug) console.log("this.inputToggles", this.inputToggles);
     //
@@ -666,10 +671,10 @@ class Worm {
     // eat: 1,
     //
     this.outputToggles = {
-      moveFwd: dna[14] > 1,
-      turnLeft: dna[15] > 2,
-      turnRight: dna[16] > 2,
-      eat: dna[17] > 1,
+      moveFwd: dna[14] >= 1,
+      turnLeft: dna[15] >= 2,
+      turnRight: dna[16] >= 2,
+      eat: dna[17] >= 0, //this whould always be a thing it can do
       clone: false,
       moveBkwd: false,
       changeBehaviour: false,
@@ -687,9 +692,9 @@ class Worm {
     this.layerConfig = {
       layers: 1, //TODO relative brain mixing
       nodes: this.calculateInputs() + 2,
-      activation0: dna[20] > 7 ? "relu" : "sigmoid", //maybe add tanh
-      activation1: dna[21] > 7 ? "relu" : "sigmoid",
-      activation2: dna[22] > 7 ? "relu" : "sigmoid",
+      activation0: dna[20] >= 7 ? "relu" : "sigmoid", //maybe add tanh
+      activation1: dna[21] >= 7 ? "relu" : "sigmoid",
+      activation2: dna[22] >= 7 ? "relu" : "sigmoid",
     };
     if (debug) console.log(" this.layerConfig ", this.layerConfig);
     this.isDnaParsed = true;
