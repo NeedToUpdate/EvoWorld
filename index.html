@@ -1,36 +1,65 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>EvoWorld</title>
-    <meta charset="UTF-8" name="viewport" content="width=device-width, user-scalable=no">
+    <meta charset="UTF-8"
+        name="viewport"
+        content="width=device-width, user-scalable=no">
     <script>
         //GLOBALS
-        let POP_SIZE = 50;
-        let UNIT = 8;
+        let POP_SIZE = 100;
+        let UNIT = 7;
         let FRICTION_COEFF = .1;
         let SPEED_LIMIT = 400;
-        let FOOD_AMOUNT = 150;
-        let FOOD_ADDED = 40;
+        let FOOD_AMOUNT = 350;
+        let FOOD_ADDED = 80;
         let TICK_DECAY = 0.1;
         let PLZLOG = false;
-        let NEW_WORMS_PER_GEN = 3;
+        let NEW_WORMS_PER_GEN = 8;
         let SKIP_DRAW = false;
+
     </script>
-    <script language="javascript" type="text/javascript" src="./lib/vector.js"></script>
-    <script language="javascript" type="text/javascript" src="./lib/matrix.js"></script>
-    <script language="javascript" type="text/javascript" src="./lib/drawbase.js"></script>
-    <script language="javascript" type="text/javascript" src="./lib/div.js"></script>
-    <script language="javascript" type="text/javascript" src="./lib/overlay.js"></script>
-    <script language="javascript" type="text/javascript" src="./lib/nn.js"></script>
-    <script language="javascript" type="text/javascript" src="./lib/quad.js"></script>
-    <script language="javascript" type="text/javascript" src="lib/collisioncontainer.js"></script>
-    <script language="javascript" type="text/javascript" src="./dna.js"></script>
-    <script language="javascript" type="text/javascript" src="./worm.js"></script>
-    <script language="javascript" type="text/javascript" src="./appendage.js"></script>
-    <script language="javascript" type="text/javascript" src="small_stuff.js"></script>
+    <script language="javascript"
+        type="text/javascript"
+        src="./lib/vector.js"></script>
+    <script language="javascript"
+        type="text/javascript"
+        src="./lib/matrix.js"></script>
+    <script language="javascript"
+        type="text/javascript"
+        src="./lib/drawbase.js"></script>
+    <script language="javascript"
+        type="text/javascript"
+        src="./lib/div.js"></script>
+    <script language="javascript"
+        type="text/javascript"
+        src="./lib/overlay.js"></script>
+    <script language="javascript"
+        type="text/javascript"
+        src="./lib/nn.js"></script>
+    <script language="javascript"
+        type="text/javascript"
+        src="./lib/quad.js"></script>
+    <script language="javascript"
+        type="text/javascript"
+        src="lib/collisioncontainer.js"></script>
+    <script language="javascript"
+        type="text/javascript"
+        src="./dna.js"></script>
+    <script language="javascript"
+        type="text/javascript"
+        src="./worm.js"></script>
+    <script language="javascript"
+        type="text/javascript"
+        src="./appendage.js"></script>
+    <script language="javascript"
+        type="text/javascript"
+        src="small_stuff.js"></script>
     <style>
-        p, label {
+        p,
+        label {
             font-size: 0.8em;
             color: white;
             font-weight: bold;
@@ -44,13 +73,11 @@
             white-space: pre;
         }
 
-        input {
-            autocomplete: "off";
-        }
+
 
         #background {
-            height: 100vh;
-            width: 100vw;
+            height: 200vh;
+            width: 200vw;
             background-color: darkgreen;
             z-index: 0;
             position: absolute;
@@ -71,10 +98,10 @@
             max-width: 40vw;
             grid-template-columns: auto;
             grid-template-rows: auto auto auto;
-            grid-template-areas: "toggle" "stats" "inputs";
+            grid-template-areas: "toggle""stats""inputs";
             border: solid white 1px;
             border-radius: 10px;
-            background-color: rgba(255,255,255,0.2);
+            background-color: rgba(255, 255, 255, 0.2);
         }
 
         .inputs {
@@ -125,509 +152,582 @@
 
     </style>
 </head>
+
 <body>
-<div id="background"></div>
-<div class="menu" id="mainmenu">
-    <div class="toggle" id="togglemenu">^</div>
-    <div class="stats" id="statmenu">
-        <p> fps: <span id="framerate">0</span></p>
-        <p> gen: <span id="gen_count">0</span></p>
-        <p> worms alive: <span id="worms_alive">0</span></p>
+    <div id="background"></div>
+    <div class="menu"
+        id="mainmenu">
+        <div class="toggle"
+            id="togglemenu">^</div>
+        <div class="stats"
+            id="statmenu">
+            <p> fps: <span id="framerate">0</span></p>
+            <p> gen: <span id="gen_count">0</span></p>
+            <p> worms alive: <span id="worms_alive">0</span></p>
+        </div>
+        <div class="inputs"
+            id="inputmenu">
+            <label for="POP_SIZE">Population: </label>
+            <input class="num_input"
+                id="POP_SIZE"
+                type="number"
+                value="50">
+            <label for="NEW_WORMS_PER_GEN">New worms added each gen: </label>
+            <input class="num_input"
+                id="NEW_WORMS_PER_GEN"
+                type="number"
+                value="3">
+            <label for="FOOD_AMOUNT">Initial Food Amount: </label>
+            <input class="num_input"
+                id="FOOD_AMOUNT"
+                type="number"
+                value="150">
+            <label for="FOOD_ADDED">Food added each gen: </label>
+            <input class="num_input"
+                id="FOOD_ADDED"
+                type="number"
+                value="50">
+            <label for="TICK_DECAY">Energy decay:<span id="TICK_DECAY_show">0.1</span></label>
+            <input class="range_input"
+                id="TICK_DECAY"
+                type="range"
+                min="0"
+                max="5"
+                value="0.1"
+                step="0.05">
+            <label for="SPEED_LIMIT">Speed Limit: <span id="SPEED_LIMIT_show">0.1</span></label>
+            <input class="range_input"
+                id="SPEED_LIMIT"
+                type="range"
+                min="1"
+                max="2000"
+                value="400">
+            <label for="SKIP_DRAW">Draw Worms: (will speed up if not drawn)</label>
+            <input id="SKIP_DRAW"
+                type="checkbox"
+                checked="checked">
+            <button id="reset">reset</button>
+        </div>
+        <div class="explantation"
+            id="explmenu">
+            <p>Click on a worm to see its brain in action. Its inputs are turned on different by its genetics, outputs are
+                always [go,left,right,eat]</p>
+            <p>click on the ground to add more food</p>
+            <p>worms will get fatter if they eat more than 100 energy</p>
+        </div>
     </div>
-    <div class="inputs" id="inputmenu">
-        <label for="POP_SIZE">Population: </label>
-        <input class="num_input" id="POP_SIZE" type="number" value="50">
-        <label for="NEW_WORMS_PER_GEN">New worms added each gen: </label>
-        <input class="num_input" id="NEW_WORMS_PER_GEN" type="number" value="3">
-        <label for="FOOD_AMOUNT">Initial Food Amount: </label>
-        <input class="num_input" id="FOOD_AMOUNT" type="number" value="150">
-        <label for="FOOD_ADDED">Food added each gen: </label>
-        <input class="num_input" id="FOOD_ADDED" type="number" value="50">
-        <label for="TICK_DECAY">Energy decay:<span id="TICK_DECAY_show">0.1</span></label>
-        <input class="range_input" id="TICK_DECAY" type="range" min="0" max="5" value="0.1" step="0.05">
-        <label for="SPEED_LIMIT">Speed Limit: <span id="SPEED_LIMIT_show">0.1</span></label>
-        <input class="range_input" id="SPEED_LIMIT" type="range" min="1" max="2000" value="400">
-        <label for="SKIP_DRAW">Draw Worms: (will speed up if not drawn)</label>
-        <input id="SKIP_DRAW" type="checkbox" checked="checked">
-        <button id="reset">reset</button>
-    </div>
-    <div class="explantation" id="explmenu">
-        <p>Click on a worm to see its brain in action. Its inputs are turned on different by its genetics, outputs are
-            always [go,left,right,eat]</p>
-        <p>click on the ground to add more food</p>
-        <p>worms will get fatter if they eat more than 100 energy</p>
-    </div>
-</div>
 
-<script>
-    LOOPING = true;
-    let population = [];
-    let food = [];
-    let gfxoffsets = {
-        head: {p: new Vector(UNIT / 2, 0), r: 0},
-        butt: {p: new Vector(UNIT / 2, UNIT * 2), r: 180},
-        left_side: {p: new Vector(0, UNIT / 2), r: -90},
-        right_side: {p: new Vector(UNIT, UNIT / 2), r: 90},
-        left_butt: {p: new Vector(0, UNIT * 1.5), r: -90},
-        right_butt: {p: new Vector(UNIT, UNIT * 1.5), r: 90},
-    };
-    let hitboxes_toggle = false;
+    <script>
+        LOOPING = true;
+        let population = [];
+        let food = [];
+        let gfxoffsets = {
+            head: {
+                p: new Vector(UNIT / 2, 0),
+                r: 0
+            },
+            butt: {
+                p: new Vector(UNIT / 2, UNIT * 2),
+                r: 180
+            },
+            left_side: {
+                p: new Vector(0, UNIT / 2),
+                r: -90
+            },
+            right_side: {
+                p: new Vector(UNIT, UNIT / 2),
+                r: 90
+            },
+            left_butt: {
+                p: new Vector(0, UNIT * 1.5),
+                r: -90
+            },
+            right_butt: {
+                p: new Vector(UNIT, UNIT * 1.5),
+                r: 90
+            },
+        };
+        let hitboxes_toggle = false;
 
-    let fitness_maxes = [];
+        let fitness_maxes = [];
 
-    function toggleHitboxes() {
-        if (hitboxes_toggle) {
-            population.forEach(worm => {
-                worm.hitbox.hidePoints();
-                worm.appendages.forEach(part => {
-                    if (part.hitbox) {
-                        part.hitbox.hidePoints();
-                    }
+        function toggleHitboxes() {
+            if (hitboxes_toggle) {
+                population.forEach(worm => {
+                    worm.hitbox.hidePoints();
+                    worm.appendages.forEach(part => {
+                        if (part.hitbox) {
+                            part.hitbox.hidePoints();
+                        }
+                    })
                 })
-            })
-        } else {
-            population.forEach(worm => {
-                worm.hitbox.drawPoints();
-                worm.appendages.forEach(part => {
-                    if (part.hitbox) {
-                        part.hitbox.drawPoints();
-                    }
+            } else {
+                population.forEach(worm => {
+                    worm.hitbox.drawPoints();
+                    worm.appendages.forEach(part => {
+                        if (part.hitbox) {
+                            part.hitbox.drawPoints();
+                        }
+                    })
                 })
-            })
+            }
+            hitboxes_toggle = !hitboxes_toggle
         }
-        hitboxes_toggle = !hitboxes_toggle
-    }
 
-    class tempGFX {
-        static create(name, location) {
-            switch (name) {
-                //creates a div to attach
-                // needs to come back with the offset, rotation
-                // and a property 'part' that contains the name and location
-                case 'eye':
-                    let eyeOffset = gfxoffsets[location].p.copy().sub(new Vector(UNIT / 4, UNIT / 4));
-                    let eye = new Div(UNIT / 4 + eyeOffset.x, eyeOffset.y, 'white', UNIT / 3);
-                    eye.set('backgroundColor', 'white');
-                    let iris = new Div(UNIT / 3, UNIT / 3, 'white', UNIT / 4);
-                    iris.set('backgroundColor', 'black');
-                    eye.part = {name: name, location: location};
-                    eye.add(iris);
-                    return eye;
-                case 'worm':
-                    let body = new Div(0, 0, 'transparent', UNIT, UNIT * 2, true);
-                    let line = new DivLine(0, UNIT * 2 / 3, UNIT, null, '#886611');
-                    let line2 = new DivLine(0, UNIT * 4 / 3, UNIT, null, '#886611');
-                    body.set('backgroundColor', '#997722');
-                    body.set('borderRadius', UNIT / 2 + 'px');
-                    body.add(line);
-                    body.add(line2);
-                    return body;
-                case 'fat':
-                    let fatOffset = gfxoffsets[location].p.copy().add(Vector.fromAngle(gfxoffsets[location].r).set(UNIT/3));
-                    let fatRotation = gfxoffsets[location].r;
-                    let fat = new Div(fatOffset.x, fatOffset.y, '#886611', UNIT / 2);
-                    fat.set('height', UNIT/1.5 + 'px');
-                    fat.set('borderRadius', '50% 50% 0 0 / 100% 100% 0 0');
-                    fat.set('borderBottom', 'transparent');
-                    fat.set('backgroundColor', '#997722');
-                    fat.part = {name: name, location: location};
-                    fat.rotateTo(fatRotation);
-                    return fat;
+        class tempGFX {
+            static create(name, location) {
+                switch (name) {
+                    //creates a div to attach
+                    // needs to come back with the offset, rotation
+                    // and a property 'part' that contains the name and location
+                    case 'eye':
+                        let eyeOffset = gfxoffsets[location].p.copy().sub(new Vector(UNIT / 4, UNIT / 4));
+                        let eye = new Div(UNIT / 4 + eyeOffset.x, eyeOffset.y, 'white', UNIT / 3);
+                        eye.set('backgroundColor', 'white');
+                        let iris = new Div(UNIT / 3, UNIT / 3, 'white', UNIT / 4);
+                        iris.set('backgroundColor', 'black');
+                        eye.part = {
+                            name: name,
+                            location: location
+                        };
+                        eye.add(iris);
+                        return eye;
+                    case 'worm':
+                        let body = new Div(0, 0, 'transparent', UNIT, UNIT * 2, true);
+                        let line = new DivLine(0, UNIT * 2 / 3, UNIT, null, '#886611');
+                        let line2 = new DivLine(0, UNIT * 4 / 3, UNIT, null, '#886611');
+                        body.set('backgroundColor', '#997722');
+                        body.set('borderRadius', UNIT / 2 + 'px');
+                        body.add(line);
+                        body.add(line2);
+                        return body;
+                    case 'fat':
+                        let fatOffset = gfxoffsets[location].p.copy().add(Vector.fromAngle(gfxoffsets[location].r).set(UNIT / 3));
+                        let fatRotation = gfxoffsets[location].r;
+                        let fat = new Div(fatOffset.x, fatOffset.y, '#886611', UNIT / 2);
+                        fat.set('height', UNIT / 1.5 + 'px');
+                        fat.set('borderRadius', '50% 50% 0 0 / 100% 100% 0 0');
+                        fat.set('borderBottom', 'transparent');
+                        fat.set('backgroundColor', '#997722');
+                        fat.part = {
+                            name: name,
+                            location: location
+                        };
+                        fat.rotateTo(fatRotation);
+                        return fat;
+                }
             }
         }
-    }
 
-    function killAll() {
-        population.forEach(x => x.dead = true);
-    }
-
-    function isFoodOK() {
-        let [a, b] = [FOODQUAD.length, food.length];
-        console.log(`%cSeems ${a === b ? 'ok' : 'not ok'}, ${a} to ${b}`, `color:${a === b ? 'green' : 'red'}`)
-    }
-
-    let menu_collapsed = false;
-
-    function toggleMenu() {
-        if (!menu_collapsed) {
-            //collapse
-            id('inputmenu').style.display = 'none';
-            id('explmenu').style.display = 'none';
-            id('statmenu').style.flexDirection = 'row';
-            id('statmenu').style.height = '20px';
-            id('statmenu').style.maxWidth = width + 'px';
-            id('togglemenu').innerText = 'v';
-            id('mainmenu').style.gridTemplateAreas = '"toggle stats"';
-            id('mainmenu').style.gridTemplateRows = 'auto';
-            id('mainmenu').style.gridTemplateColumns = 'auto auto';
-            id('mainmenu').style.maxWidth = width + 'px';
-        } else {
-            //expand
-            id('statmenu').style.height = '';
-            id('statmenu').style.maxWidth = '';
-            id('statmenu').style.flexDirection = '';
-            id('inputmenu').style.display = '';
-            id('togglemenu').innerText = '^';
-            id('mainmenu').style.gridTemplateAreas = '"toggle" "stats" "inputs"';
-            id('mainmenu').style.gridTemplateRows = 'auto auto auto';
-            id('mainmenu').style.gridTemplateColumns = 'auto';
-            id('mainmenu').style.maxWidth = '40vw';
-            id('explmenu').style.display = '';
+        function killAll() {
+            population.forEach(x => x.dead = true);
         }
-        menu_collapsed = !menu_collapsed
-    }
 
-
-    let global_overlay = null;
-    let looking_at = null;
-
-    function lookAt(n) {
-        stopLook();
-        looking_at = n;
-        population[n].TEMPGFX.shape.set('backgroundColor', 'blue');
-        global_overlay = new nnOverlay(population[n].brain);
-        global_overlay.init();
-    }
-
-    function stopLook() {
-        if (global_overlay) {
-            global_overlay.destroy();
-            population[looking_at].TEMPGFX.shape.set('backgroundColor', '#997722');
-            global_overlay = null;
-            looking_at = null;
+        function isFoodOK() {
+            let [a, b] = [FOODQUAD.length, food.length];
+            console.log(`%cSeems ${a === b ? 'ok' : 'not ok'}, ${a} to ${b}`, `color:${a === b ? 'green' : 'red'}`)
         }
-    }
 
-    function lookAtNext() {
-        if (looking_at) {
-            lookAt((looking_at + 1) % (POP_SIZE - 1))
-        }
-    }
+        let menu_collapsed = false;
 
-    function lookAtPrev() {
-        if (looking_at) {
-            lookAt((looking_at - 1) % (POP_SIZE - 1))
-        }
-    }
-
-
-    let genCount = 0;
-
-    function getNewGen() {
-        genCount++;
-        //HANDLE TEMP GRAPHICS
-        stopLook();
-        population.forEach(worm => {
-            if (worm.TEMPGFX) {
-                worm.TEMPGFX.shape.remove();
+        function toggleMenu() {
+            if (!menu_collapsed) {
+                //collapse
+                id('inputmenu').style.display = 'none';
+                id('explmenu').style.display = 'none';
+                id('statmenu').style.flexDirection = 'row';
+                id('statmenu').style.height = '20px';
+                id('statmenu').style.maxWidth = width + 'px';
+                id('togglemenu').innerText = 'v';
+                id('mainmenu').style.gridTemplateAreas = '"toggle stats"';
+                id('mainmenu').style.gridTemplateRows = 'auto';
+                id('mainmenu').style.gridTemplateColumns = 'auto auto';
+                id('mainmenu').style.maxWidth = width + 'px';
+            } else {
+                //expand
+                id('statmenu').style.height = '';
+                id('statmenu').style.maxWidth = '';
+                id('statmenu').style.flexDirection = '';
+                id('inputmenu').style.display = '';
+                id('togglemenu').innerText = '^';
+                id('mainmenu').style.gridTemplateAreas = '"toggle" "stats" "inputs"';
+                id('mainmenu').style.gridTemplateRows = 'auto auto auto';
+                id('mainmenu').style.gridTemplateColumns = 'auto';
+                id('mainmenu').style.maxWidth = '40vw';
+                id('explmenu').style.display = '';
             }
-        });
-        id('gen_count').innerText = genCount;
+            menu_collapsed = !menu_collapsed
+        }
 
 
-        for (let i = 0; i < FOOD_ADDED; i++) {
-            let foodPiece = new FoodPiece(new Vector(getRandom(50, width - 50), getRandom(50, height - 50)), getRandom(1, 4));
+        let global_overlay = null;
+        let looking_at = null;
+
+        function lookAt(n) {
+            stopLook();
+            looking_at = n;
+            population[n].TEMPGFX.shape.set('backgroundColor', 'blue');
+            global_overlay = new nnOverlay(population[n].brain);
+            global_overlay.init();
+        }
+
+        function stopLook() {
+            if (global_overlay) {
+                global_overlay.destroy();
+                population[looking_at].TEMPGFX.shape.set('backgroundColor', '#997722');
+                global_overlay = null;
+                looking_at = null;
+            }
+        }
+
+        function lookAtNext() {
+            if (looking_at) {
+                lookAt((looking_at + 1) % (POP_SIZE - 1))
+            }
+        }
+
+        function lookAtPrev() {
+            if (looking_at) {
+                lookAt((looking_at - 1) % (POP_SIZE - 1))
+            }
+        }
+
+
+        let genCount = 0;
+
+        function getNewGen() {
+            genCount++;
+            //HANDLE TEMP GRAPHICS
+            stopLook();
+            population.forEach(worm => {
+                if (worm.TEMPGFX) {
+                    worm.TEMPGFX.shape.remove();
+                }
+            });
+            id('gen_count').innerText = genCount;
+
+
+            for (let i = 0; i < FOOD_ADDED; i++) {
+                let foodPiece = new FoodPiece(new Vector(getRandom(50, width - 50), getRandom(50, height - 50)), getRandom(1, 4));
+                FOODQUAD.addItem(foodPiece.p.copy(), foodPiece);
+                food.push(foodPiece);
+            }
+
+            //HANDLE LOGIC
+            let fittest = getFittest(population);
+            fitness_maxes.push(fittest.fitness);
+            console.log('most fit: ' + fittest.fitness);
+            if (fittest.fitness === 0) {
+                console.log('all worms are bad, restarting')
+                createNewPopulation()
+            } else {
+                let temp = Array.from(population);
+                population = chooseFittestAndMutate(temp);
+            }
+        }
+
+        function getFittest(population) {
+            return population.reduce((a, b) => {
+                if (a.getFitness() >= b.getFitness()) {
+                    return a;
+                } else {
+                    return b;
+                }
+            });
+        }
+
+        function chooseFittestAndMutate(arrayOfPops) {
+            let parents = [];
+            let newPopulation = [];
+            //can be expanded to multiple parents, but that cant be done rn with variable brain sizes
+            for (let i = 0; i < 1; i++) {
+                //this essentially spins a wheel where every slice is proportional to their fitness.
+                //if they have a larger fitness, they have a much larger chance to get chosen
+                // let sum = arrayOfPops.reduce((tot, a) => tot + a.getFitness() ** 2, 0);
+                // let chosen = Math.random() * (sum + 1);
+                // let found = false;
+                // let parent = arrayOfPops.reduce((tot, a) => {
+                //     if (!found) {
+                //         tot += a.getFitness() ** 2;
+                //         if (tot > chosen) {
+                //             found = true;
+                //             return a;
+                //         } else {
+                //             return tot;
+                //         }
+
+                //     } else {
+                //         return tot;
+                //     }
+                // }, 1);
+                // found = false;
+
+                //this version just gets the fittest
+                let sorted = arrayOfPops.sort((a, b) => {
+                    return b.getFitness() - a.getFitness()
+                })
+                parent = sorted[0]
+                arrayOfPops.splice(arrayOfPops.indexOf(parent), 1);
+                parents.push(parent);
+            }
+            for (let i = 0; i < POP_SIZE - NEW_WORMS_PER_GEN - 1; i++) {
+                let rand = parents[0];
+
+                let newdude = rand.copy();
+                newdude.init();
+                newdude.setP(Vector.random(width, height));
+                newdude.brain.mutate(0.2, 0.06);
+                newdude.brain.mutate(0.05, 0.10);
+                newdude.brain.mutate(0.01, 0.20);
+                newPopulation.push(newdude);
+            }
+            parents.forEach((parent, i) => {
+                let par = parent.copy();
+                par.init();
+                par.setP(Vector.random(width, height));
+                newPopulation.push(par);
+            })
+            for (let i = 0; i < NEW_WORMS_PER_GEN; i++) {
+                let newWorm = new Worm(0, 0);
+                newWorm.init();
+                newWorm.setP(Vector.random(width, height));
+                newPopulation.push(newWorm);
+            }
+            return newPopulation;
+        }
+
+        //quad needed for performace in the future
+        let QUAD = {};
+        let FOODQUAD = {};
+
+        function setupDraw() {
+            return new Promise(resolve => {
+                id('togglemenu').addEventListener('click', toggleMenu);
+                id('worms_alive').innerText = population.length;
+                id('SPEED_LIMIT_show').innerText = SPEED_LIMIT;
+                id('TICK_DECAY_show').innerText = TICK_DECAY;
+                id('POP_SIZE').value = POP_SIZE;
+                id('TICK_DECAY').value = TICK_DECAY;
+                id('SPEED_LIMIT').value = SPEED_LIMIT;
+                id('FOOD_AMOUNT').value = FOOD_AMOUNT;
+                id('NEW_WORMS_PER_GEN').value = NEW_WORMS_PER_GEN;
+                id('SKIP_DRAW').checked = !SKIP_DRAW;
+                id('FOOD_ADDED').value = FOOD_ADDED;
+                id('POP_SIZE').addEventListener('input', (e) => {
+                    POP_SIZE = id('POP_SIZE').value;
+                });
+                id('TICK_DECAY').addEventListener('input', (e) => {
+                    TICK_DECAY = id('TICK_DECAY').value;
+                    id('TICK_DECAY_show').innerText = id('TICK_DECAY').value
+                });
+                id('SPEED_LIMIT').addEventListener('input', (e) => {
+                    id('SPEED_LIMIT_show').innerText = id('SPEED_LIMIT').value;
+                    SPEED_LIMIT = id('SPEED_LIMIT').value;
+                });
+                id('FOOD_AMOUNT').addEventListener('input', (e) => {
+                    FOOD_AMOUNT = id('FOOD_AMOUNT').value;
+                });
+                id('NEW_WORMS_PER_GEN').addEventListener('input', (e) => {
+                    NEW_WORMS_PER_GEN = id('NEW_WORMS_PER_GEN').value;
+
+                });
+                id('SKIP_DRAW').addEventListener('input', (e) => {
+                    SKIP_DRAW = !id('SKIP_DRAW').checked;
+                });
+                id('FOOD_ADDED').addEventListener('input', (e) => {
+                    FOOD_ADDED = id('FOOD_ADDED').value;
+                });
+                id('reset').addEventListener('click', () => {
+                    stop();
+                    stopLook();
+                    population.forEach(worm => {
+                        if (worm.TEMPGFX) {
+                            worm.TEMPGFX.shape.remove();
+                        }
+                    });
+                    food.forEach(piece => {
+                        if (piece.TEMPGFX) {
+                            piece.TEMPGFX.shape.remove();
+                        }
+                    });
+                    population = [];
+                    food = [];
+                    QUAD.clear();
+                    FOODQUAD.clear();
+                    genCount = 0;
+                    LOOPING = true;
+                    start();
+                });
+                resolve(true);
+            })
+        }
+
+        id('background').addEventListener('click', e => {
+            let x = e.clientX;
+            let y = e.clientY;
+            let foodPiece = new FoodPiece(new Vector(x, y), getRandom(1, 4));
             FOODQUAD.addItem(foodPiece.p.copy(), foodPiece);
             food.push(foodPiece);
-        }
-
-        //HANDLE LOGIC
-        let fittest = getFittest(population);
-        fitness_maxes.push(fittest.fitness);
-        console.log('most fit: ' + fittest.fitness);
-        let temp = Array.from(population);
-        population = chooseFittestAndMix(temp);
-    }
-
-    function getFittest(population) {
-        return population.reduce((a, b) => {
-            if (a.getFitness() >= b.getFitness()) {
-                return a;
-            } else {
-                return b;
-            }
         });
-    }
 
-    function chooseFittestAndMix(arrayOfPops) {
-        let parents = [];
-        let newPopulation = [];
-        for (let i = 0; i < 2; i++) {
-            let sum = arrayOfPops.reduce((tot, a) => tot + a.getFitness(), 0);
-            let chosen = Math.random() * (sum + 1);
-            let found = false;
-            let parent = arrayOfPops.reduce((tot, a) => {
-                if (!found) {
-                    tot += a.getFitness();
-                    if (tot > chosen) {
-                        found = true;
-                        return a;
-                    } else {
-                        return tot;
-                    }
-
-                } else {
-                    return tot;
-                }
-            }, 1);
-            found = false;
-            arrayOfPops.splice(arrayOfPops.indexOf(parent), 1);
-            parents.push(parent);
-        }
-        for (let i = 0; i < POP_SIZE - 3; i++) {
-            let rand = parents[0];
-            let rand2 = parents[1];
-            let dominant = Math.random() * 2 | 0;
-            let newdude = parents[1 - dominant].copy();
-            newdude.init();
-            newdude.setP(Vector.random(width, height));
-            newdude.brain = newdude.brain.mix(parents[dominant].brain, 2);
-            newdude.brain.mutate(0.1, 0.05);
-            newdude.brain.mutate(0.05, 0.07);
-            newdude.brain.mutate(0.01, 0.12);
-            newPopulation.push(newdude);
-        }
-        let par1 = parents[0].copy();
-        par1.init();
-        par1.setP(Vector.random(width, height));
-        newPopulation.push(par1);
-        let par2 = parents[1].copy();
-        par2.init();
-        par2.setP(Vector.random(width, height));
-        newPopulation.push(par2);
-        for (let i = 0; i < NEW_WORMS_PER_GEN; i++) {
-            let newWorm = new Worm(0, 0);
-            newWorm.init();
-            newWorm.setP(Vector.random(width, height));
-            newPopulation.push(newWorm);
-        }
-        return newPopulation;
-    }
-
-    //quad needed for performace in the future
-    let QUAD = {};
-    let FOODQUAD = {};
-
-    function setupDraw() {
-        return new Promise(resolve => {
-            id('togglemenu').addEventListener('click', toggleMenu);
-            id('worms_alive').innerText = population.length;
-            id('SPEED_LIMIT_show').innerText = SPEED_LIMIT;
-            id('TICK_DECAY_show').innerText = TICK_DECAY;
-            id('POP_SIZE').value = POP_SIZE;
-            id('TICK_DECAY').value = TICK_DECAY;
-            id('SPEED_LIMIT').value = SPEED_LIMIT;
-            id('FOOD_AMOUNT').value = FOOD_AMOUNT;
-            id('NEW_WORMS_PER_GEN').value = NEW_WORMS_PER_GEN;
-            id('SKIP_DRAW').checked = !SKIP_DRAW;
-            id('FOOD_ADDED').value = FOOD_ADDED;
-            id('POP_SIZE').addEventListener('input', (e) => {
-                POP_SIZE = id('POP_SIZE').value;
-            });
-            id('TICK_DECAY').addEventListener('input', (e) => {
-                TICK_DECAY = id('TICK_DECAY').value;
-                id('TICK_DECAY_show').innerText = id('TICK_DECAY').value
-            });
-            id('SPEED_LIMIT').addEventListener('input', (e) => {
-                id('SPEED_LIMIT_show').innerText = id('SPEED_LIMIT').value;
-                SPEED_LIMIT = id('SPEED_LIMIT').value;
-            });
-            id('FOOD_AMOUNT').addEventListener('input', (e) => {
-                FOOD_AMOUNT = id('FOOD_AMOUNT').value;
-            });
-            id('NEW_WORMS_PER_GEN').addEventListener('input', (e) => {
-                NEW_WORMS_PER_GEN = id('NEW_WORMS_PER_GEN').value;
-
-            });
-            id('SKIP_DRAW').addEventListener('input', (e) => {
-                SKIP_DRAW = !id('SKIP_DRAW').checked;
-            });
-            id('FOOD_ADDED').addEventListener('input', (e) => {
-                FOOD_ADDED = id('FOOD_ADDED').value;
-            });
-            id('reset').addEventListener('click', () => {
-                stop();
-                stopLook();
-                population.forEach(worm => {
-                    if (worm.TEMPGFX) {
-                        worm.TEMPGFX.shape.remove();
-                    }
-                });
-                food.forEach(piece => {
-                    if (piece.TEMPGFX) {
-                        piece.TEMPGFX.shape.remove();
-                    }
-                });
-                population = [];
-                food = [];
-                QUAD.clear();
-                FOODQUAD.clear();
-                genCount = 0;
-                LOOPING = true;
-                start();
-            });
-            resolve(true);
-        })
-    }
-
-    id('background').addEventListener('click', e => {
-        let x = e.clientX;
-        let y = e.clientY;
-        let foodPiece = new FoodPiece(new Vector(x, y), getRandom(1, 4));
-        FOODQUAD.addItem(foodPiece.p.copy(), foodPiece);
-        food.push(foodPiece);
-    });
-
-    function setupLogic() {
-        return new Promise(resolve => {
-            QUAD = new Quad(0, 0, width, height);
+        function createNewPopulation() {
+            population = []
             for (let i = 0; i < POP_SIZE; i++) {
                 let w = new Worm(getRandom(100, width - 100), getRandom(100, height - 100));
                 w.init();
                 QUAD.addItem(w.p.copy(), w);
                 population.push(w);
             }
-            FOODQUAD = new Quad(0, 0, width, height);
-            for (let i = 0; i < FOOD_AMOUNT; i++) {
-                let foodPiece = new FoodPiece(new Vector(getRandom(50, width - 50), getRandom(50, height - 50)), getRandom(1, 4));
-                FOODQUAD.addItem(foodPiece.p.copy(), foodPiece);
-                food.push(foodPiece);
-            }
-            resolve(true);
-        })
-    }
+        }
 
-    function doLogic(dt) {
-        return new Promise(resolve => {
-            for (let i = population.length - 1; i >= 0; i--) {
-                population[i].update(dt);
-                for (let j = population[i].appendages.length - 1; j >= 0; j--) {
-                    if (population[i].appendages[j].dead) {
-                        population[i].appendages.splice(j, 1);
+        function setupLogic() {
+            return new Promise(resolve => {
+                QUAD = new Quad(0, 0, width, height);
+                createNewPopulation()
+                FOODQUAD = new Quad(0, 0, width, height);
+                for (let i = 0; i < FOOD_AMOUNT; i++) {
+                    let foodPiece = new FoodPiece(new Vector(getRandom(50, width - 50), getRandom(50, height - 50)), getRandom(1, 4));
+                    FOODQUAD.addItem(foodPiece.p.copy(), foodPiece);
+                    food.push(foodPiece);
+                }
+                resolve(true);
+            })
+        }
+
+        function doLogic(dt) {
+            return new Promise(resolve => {
+                for (let i = population.length - 1; i >= 0; i--) {
+                    population[i].update(dt);
+                    for (let j = population[i].appendages.length - 1; j >= 0; j--) {
+                        if (population[i].appendages[j].dead) {
+                            population[i].appendages.splice(j, 1);
+                        }
                     }
                 }
-            }
-            let deadnum = population.reduce((tot, a) => tot + (a.dead ? 1 : 0), 0);
-            id('worms_alive').innerText = population.length - deadnum;
-            if (deadnum >= POP_SIZE - 1) {
-                getNewGen();
-            }
-            for (let i = food.length - 1; i >= 0; i--) {
-                if (food[i].eaten) {
-                    FOODQUAD.removeItem(food[i].p.copy(), food[i]);
-                    food.splice(i, 1);
+                let deadnum = population.reduce((tot, a) => tot + (a.dead ? 1 : 0), 0);
+                id('worms_alive').innerText = population.length - deadnum;
+                if (deadnum >= POP_SIZE - 1) {
+                    getNewGen();
                 }
-            }
-            resolve(true);
-        })
-    }
-
-    let foodGFX = [];
-
-    function doDraw() {
-        return new Promise(resolve => {
-            if (looking_at) global_overlay.draw();
-            if (SKIP_DRAW) {
+                for (let i = food.length - 1; i >= 0; i--) {
+                    if (food[i].eaten) {
+                        FOODQUAD.removeItem(food[i].p.copy(), food[i]);
+                        food.splice(i, 1);
+                    }
+                }
                 resolve(true);
-                return;
-            }
-            //since this will eventually turn into a webGL thing, all drawing is separate from logic
-            population.forEach(worm => {
-                if (!worm.TEMPGFX) {
-                    worm.TEMPGFX = {};
-                    worm.TEMPGFX.shape = tempGFX.create('worm');
-                    worm.TEMPGFX.shape.shape.addEventListener('click', () => {
-                        lookAt(population.indexOf(worm));
-                        worm.log();
-                    });
-                    worm.TEMPGFX.appendages = [];
+            })
+        }
+
+        let foodGFX = [];
+
+        function doDraw() {
+            return new Promise(resolve => {
+                if (looking_at) global_overlay.draw();
+                if (SKIP_DRAW) {
+                    resolve(true);
+                    return;
                 }
-                worm.TEMPGFX.shape.moveTo(worm.p);
-                worm.TEMPGFX.shape.rotateTo(worm.r);
-                if (worm.appendages.length !== worm.TEMPGFX.appendages.length) {
-                    worm.appendages.forEach(part => {
-                        if (worm.TEMPGFX.appendages.filter(shape => shape.part.name === part.name && shape.part.location === part.location).length === 0) {
-                            let newPart = tempGFX.create(part.name, part.location);
-                            worm.TEMPGFX.appendages.push(newPart);
-                            worm.TEMPGFX.shape.add(newPart);
-                        }
-                    });
-                    //if theres too many graphics objects then one needs to be removed
-                    if (worm.TEMPGFX.appendages.length > worm.appendages.length) {
-                        //cycle through them backwards, find the one that doesnt exist, delete it
-                        for (let i = worm.TEMPGFX.appendages.length - 1; i >= 0; i--) {
-                            let item = worm.appendages.filter(x => x.name === worm.TEMPGFX.appendages[i].part.name && x.location === worm.TEMPGFX.appendages[i].part.location);
-                            if (item.length === 0) {
-                                //run remove() to get rid of th dic and delete the reference in TEMPGFX
-                                worm.TEMPGFX.appendages[i].remove();
-                                worm.TEMPGFX.appendages.splice(i, 1);
+                //since this will eventually turn into a webGL thing, all drawing is separate from logic
+                population.forEach(worm => {
+                    if (!worm.TEMPGFX) {
+                        worm.TEMPGFX = {};
+                        worm.TEMPGFX.shape = tempGFX.create('worm');
+                        worm.TEMPGFX.shape.rotateTo(worm.r)
+                        worm.TEMPGFX.shape.shape.addEventListener('click', () => {
+                            lookAt(population.indexOf(worm));
+                            worm.log();
+                        });
+                        worm.TEMPGFX.appendages = [];
+                    }
+                    worm.TEMPGFX.shape.moveTo(worm.p);
+                    worm.TEMPGFX.shape.rotateTo(worm.r);
+                    if (worm.appendages.length !== worm.TEMPGFX.appendages.length) {
+                        worm.appendages.forEach(part => {
+                            if (worm.TEMPGFX.appendages.filter(shape => shape.part.name === part.name && shape.part.location === part.location).length === 0) {
+                                let newPart = tempGFX.create(part.name, part.location);
+                                worm.TEMPGFX.appendages.push(newPart);
+                                worm.TEMPGFX.shape.add(newPart);
+                            }
+                        });
+                        //if theres too many graphics objects then one needs to be removed
+                        if (worm.TEMPGFX.appendages.length > worm.appendages.length) {
+                            //cycle through them backwards, find the one that doesnt exist, delete it
+                            for (let i = worm.TEMPGFX.appendages.length - 1; i >= 0; i--) {
+                                let item = worm.appendages.filter(x => x.name === worm.TEMPGFX.appendages[i].part.name && x.location === worm.TEMPGFX.appendages[i].part.location);
+                                if (item.length === 0) {
+                                    //run remove() to get rid of th dic and delete the reference in TEMPGFX
+                                    worm.TEMPGFX.appendages[i].remove();
+                                    worm.TEMPGFX.appendages.splice(i, 1);
+                                }
                             }
                         }
                     }
+                    if (worm.dead) {
+                        worm.TEMPGFX.shape.remove();
+                    }
+                });
+                food.forEach(piece => {
+                    if (!piece.TEMPGFX) {
+                        piece.TEMPGFX = {};
+                        piece.TEMPGFX.shape = new Div(piece.p.x, piece.p.y, 'yellow', piece.energy);
+                        foodGFX.push(piece);
+                    }
+                });
+                for (let i = foodGFX.length - 1; i >= 0; i--) {
+                    if (foodGFX[i].eaten) {
+                        foodGFX[i].TEMPGFX.shape.remove();
+                        foodGFX.splice(i, 1);
+                    }
                 }
-                if (worm.dead) {
-                    worm.TEMPGFX.shape.remove();
-                }
-            });
-            food.forEach(piece => {
-                if (!piece.TEMPGFX) {
-                    piece.TEMPGFX = {};
-                    piece.TEMPGFX.shape = new Div(piece.p.x, piece.p.y, 'yellow', piece.energy);
-                    foodGFX.push(piece);
-                }
-            });
-            for (let i = foodGFX.length - 1; i >= 0; i--) {
-                if (foodGFX[i].eaten) {
-                    foodGFX[i].TEMPGFX.shape.remove();
-                    foodGFX.splice(i, 1);
-                }
-            }
 
-            resolve(true);
-        })
-    }
-
-    let prev_time = 0;
-
-    function padSpace(text, val) {
-        let a = text.toString();
-        while (a.length < (val)) {
-            a = '  ' + a;
-        }
-        return a;
-    }
-
-    function loop(now) {
-        //fps calc
-        let delta_time = now - prev_time;
-        id('framerate').innerText = padSpace(1000 / (delta_time) | 0, 2);
-        prev_time = now;
-
-        doLogic(delta_time).then(() => {
-            doDraw().then(() => {
-                if (LOOPING) {
-                    requestAnimationFrame(loop)
-                }
+                resolve(true);
             })
-        }).catch(err => {
-            console.log(err)
-        });
-    }
+        }
 
-    function start() {
-        setupLogic().then(() => {
-            setupDraw().then(() => {
-                requestAnimationFrame(loop);
+        let prev_time = 0;
+
+        function padSpace(text, val) {
+            let a = text.toString();
+            while (a.length < (val)) {
+                a = '  ' + a;
+            }
+            return a;
+        }
+
+        function loop(now) {
+            //fps calc
+            let delta_time = now - prev_time;
+            id('framerate').innerText = padSpace(1000 / (delta_time) | 0, 2);
+            prev_time = now;
+
+            doLogic(delta_time).then(() => {
+                doDraw().then(() => {
+                    if (LOOPING) {
+                        requestAnimationFrame(loop)
+                    }
+                })
+            }).catch(err => {
+                console.log(err)
             });
-        }).catch(err => {
-            console.log(err)
-        });
-    }
+        }
 
-    start();
+        function start() {
+            width = width * 2
+            height = height * 2
+            setupLogic().then(() => {
+                setupDraw().then(() => {
+                    requestAnimationFrame(loop);
+                });
+            }).catch(err => {
+                console.log(err)
+            });
+        }
 
+        start();
 
-</script>
+    </script>
 
 </body>
+
 </html>
