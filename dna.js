@@ -19,14 +19,14 @@ class DNA {
       return this.header + this.data;
     } else if (typeof this.structure === "number") {
       // return DNA.randomHex(this.structure);
-      console.log("TODO");
+      //   console.log("TODO");
     }
   }
   create(array) {
     //check for validity
     let ok = array.filter((x) => typeof x === "number").length === array.length;
     if (!ok) {
-      console.error(`Array provided isn't valid. All values must be numbers`);
+      //   console.error(`Array provided isn't valid. All values must be numbers`);
       return;
     }
     let DNAstring = "";
@@ -156,7 +156,7 @@ class DNA {
     });
     //sanity check
     if (len !== parsed_pairs.reduce((tot, a) => tot + a.counter, 0)) {
-      console.error("something wrong with the header");
+      //   console.error("something wrong with the header");
     }
 
     let finalArray = [];

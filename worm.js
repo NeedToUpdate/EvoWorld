@@ -98,10 +98,10 @@ class Worm {
 
     this.layerConfig = {
       layers: 1,
-      nodes: this.calculateInputs() + 1,
-      activation0: "relu",
-      activation1: "relu",
-      activation2: "relu",
+      nodes: this.calculateInputs() + 3,
+      activation0: "sigmoid",
+      activation1: "sigmoid",
+      activation2: "sigmoid",
     };
     this.DNA = {};
     this.brain = {};
@@ -217,7 +217,7 @@ class Worm {
     if (number > 0) {
       if (this.addFat()) {
         this.energy += number;
-        //console.log('energy is at ' + this.energy)
+        console.log("energy is at " + this.energy);
       }
     }
   }
@@ -414,14 +414,16 @@ class Worm {
       .filter((x) => x.hasInput)
       .forEach((part) => {
         let canSeeStuff = part.use(nearbyFood).length > 0 ? 1 : 0;
-        if (PLZLOG) {
-          console.log(canSeeStuff, nearbyFood, part.use(nearbyFood));
-          PLZLOG = false;
-        }
+
         inputs.push(canSeeStuff);
       });
-
-    return this.brain.predict(inputs);
+    let output = [];
+    try {
+      output = this.brain.predict(inputs);
+    } catch {
+      this.die();
+    }
+    return output;
   }
 
   handleThoughts(outputArray) {
@@ -538,7 +540,7 @@ class Worm {
       location = this.getFreeAppendageLocation();
     }
     if (this.getFreeAppendageLocation() === null) {
-      console.log(`[worm] theres no room for a new appendage`);
+      //   console.log(`[worm] theres no room for a new appendage`);
       return;
     }
     appendage.p = this.p;
@@ -549,12 +551,12 @@ class Worm {
 
   removeAppendage(name, location) {
     if (this.appendages.length < 1) {
-      console.log(`[worm] I don't have any appendages to remove`);
+      //   console.log(`[worm] I don't have any appendages to remove`);
       return;
     }
     if (name === "random") {
       let lost = this.appendages.splice((Math.random() * this.appendages.length) | 0, 1);
-      console.log(`[worm] My ${lost.name} was removed from my ${lost.location}`);
+      //   console.log(`[worm] My ${lost.name} was removed from my ${lost.location}`);
       return;
     }
     let appendage = this.appendages.filter((part) => {
@@ -563,9 +565,9 @@ class Worm {
     if (appendage.length > 0) {
       this.appendages.splice(this.appendages.indexOf(appendage[0]), 1);
       appendage[0].remove();
-      console.log(`[worm] My ${appendage[0].name} was removed from my ${appendage[0].location}`);
+      //   console.log(`[worm] My ${appendage[0].name} was removed from my ${appendage[0].location}`);
     } else {
-      console.log(`[worm] I dont have a(n) ${name} on my ${location}`);
+      //   console.log(`[worm] I dont have a(n) ${name} on my ${location}`);
     }
   }
 
@@ -588,14 +590,14 @@ class Worm {
   }
 
   log() {
-    console.group("worm");
-    console.log("Energy: " + this.energy);
-    console.log("Fitness: " + this.fitness);
-    console.log("CooldownNeeded: " + this.restNeeded);
-    console.log("inputs", this.inputToggles);
-    console.log("outputs", this.outputToggles);
-    console.log("layers", this.layerConfig);
-    console.groupEnd();
+    // console.group("worm");
+    // console.log("Energy: " + this.energy);
+    // console.log("Fitness: " + this.fitness);
+    // console.log("CooldownNeeded: " + this.restNeeded);
+    // console.log("inputs", this.inputToggles);
+    // console.log("outputs", this.outputToggles);
+    // console.log("layers", this.layerConfig);
+    // console.groupEnd();
   }
 
   createDNA() {
@@ -610,7 +612,7 @@ class Worm {
     // eye num 1
     //1-3 eyes are needed so;
     let eyeNum = (1, (dna[0] / 4) | 0);
-    if (debug) console.log("eyenum", eyeNum);
+    // if (debug) console.log("eyenum", eyeNum);
     // eye location 2
     let locs = [];
     let locsLog = [];
@@ -622,13 +624,13 @@ class Worm {
       locsLog.push(i);
       //TODO for now first eye will always be on head
     }
-    if (debug) console.log("locs", locs, locsLog);
+    // if (debug) console.log("locs", locs, locsLog);
     for (let i = 0; i < eyeNum; i++) {
       this.addAppendage("eye", locs[i]);
     }
     // cooldown 1
     this.restNeeded = (dna[2] % 5) + 1;
-    if (debug) console.log("restNeeded", this.restNeeded);
+    // if (debug) console.log("restNeeded", this.restNeeded);
     //
     // #inputs#
     //
@@ -657,11 +659,11 @@ class Worm {
       x_position: dna[11] >= 10, //11
       y_position: dna[12] >= 10, //12
     };
-    if (debug) console.log("this.inputToggles", this.inputToggles);
+    // if (debug) console.log("this.inputToggles", this.inputToggles);
     //
     // max energy 2
     this.MAX_ENERGY = (dna[13] / 255) * 100;
-    if (debug) console.log(" this.MAX_ENERGY ", this.MAX_ENERGY);
+    // if (debug) console.log(" this.MAX_ENERGY ", this.MAX_ENERGY);
     //
     // #outputs#
     //
@@ -680,7 +682,7 @@ class Worm {
       changeBehaviour: false,
     };
 
-    if (debug) console.log(" this.outputToggles ", this.outputToggles);
+    // if (debug) console.log(" this.outputToggles ", this.outputToggles);
     // #layer config#
     //
     // layers: 1,
@@ -696,7 +698,7 @@ class Worm {
       activation1: dna[21] >= 7 ? "relu" : "sigmoid",
       activation2: dna[22] >= 7 ? "relu" : "sigmoid",
     };
-    if (debug) console.log(" this.layerConfig ", this.layerConfig);
+    // if (debug) console.log(" this.layerConfig ", this.layerConfig);
     this.isDnaParsed = true;
   }
 }

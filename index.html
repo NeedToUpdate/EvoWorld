@@ -325,7 +325,7 @@
 
         function isFoodOK() {
             let [a, b] = [FOODQUAD.length, food.length];
-            console.log(`%cSeems ${a === b ? 'ok' : 'not ok'}, ${a} to ${b}`, `color:${a === b ? 'green' : 'red'}`)
+            // console.log(`%cSeems ${a === b ? 'ok' : 'not ok'}, ${a} to ${b}`, `color:${a === b ? 'green' : 'red'}`)
         }
 
         let menu_collapsed = false;
@@ -566,8 +566,8 @@
         }
 
         id('background').addEventListener('click', e => {
-            let x = e.clientX;
-            let y = e.clientY;
+            let x = e.layerX;
+            let y = e.layerY;
             let foodPiece = new FoodPiece(new Vector(x, y), getRandom(1, 4));
             FOODQUAD.addItem(foodPiece.p.copy(), foodPiece);
             food.push(foodPiece);
@@ -711,23 +711,26 @@
                     }
                 })
             }).catch(err => {
-                console.log(err)
+                // console.log(err)
             });
         }
 
         function start() {
-            width = width * 2
-            height = height * 2
+
             setupLogic().then(() => {
                 setupDraw().then(() => {
                     requestAnimationFrame(loop);
                 });
             }).catch(err => {
-                console.log(err)
+                // console.log(err)
             });
         }
+        requestAnimationFrame(() => {
 
-        start();
+            width = width * 2
+            height = height * 2
+            start();
+        })
 
     </script>
 
