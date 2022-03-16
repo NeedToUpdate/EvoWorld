@@ -74,6 +74,7 @@ class Worm {
     this.inputToggles = {
       speed: true,
       rotation: true,
+      inverse_rotation: true,
       energy: true,
       inverse_energy: true,
       body_feel: true, //something in the hitbox
@@ -361,8 +362,13 @@ class Worm {
       inputs.push(this.v.copy().mag() / SPEED_LIMIT); //normalized
     }
     if (this.inputToggles.rotation) {
-      //rotation away from north? //TODO
+      //rotation away from north
       let angle = 1 - Math.abs((this.r % 360) - 180) / 180;
+      inputs.push(angle);
+    }
+    if (this.inputToggles.inverse_rotation) {
+      //rotation towards north
+      let angle = 1 - Math.abs(this.r % 360) / 180;
       inputs.push(angle);
     }
     if (this.inputToggles.energy) {
@@ -418,24 +424,24 @@ class Worm {
        */
     //needs to stay in order
 
-    let order = ["moveFwd", "turnLeft", "turnRight", "eat", "moveBkwd", "changeBehaviour"];
+    let order = ["moveFwd", "turnRight", "turnLeft", "eat", "moveBkwd", "changeBehaviour"];
 
     outputArray.forEach((output, i) => {
       if (this.outputToggles[order[i]]) {
         switch (order[i]) {
           case "moveFwd":
-            if (output > 0.3) {
+            if (output > 0) {
               this.walk(3 * output);
             }
             break;
-          case "turnLeft":
-            if (output > 0.4) {
-              this.turn(-60 * (output - 0.4));
+          case "turnRight":
+            if (output > 0) {
+              this.turn(60 * output);
             }
             break;
-          case "turnRight":
-            if (output > 0.4) {
-              this.turn(60 * (output - 0.4));
+          case "turnLeft":
+            if (output > 0) {
+              this.turn(-60 * output);
             }
             break;
           case "eat":
